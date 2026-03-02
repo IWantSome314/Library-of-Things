@@ -1,3 +1,22 @@
+# Issues
+
+```
+  StarterApp net9.0-android failed with 1 error(s) (1.0s)
+    Resources/values/colors.xml : error APT2126: 
+      file not found.
+```
+
+```
+root ➜ /workspace (main) $ dotnet build
+Restore complete (0.8s)
+  StarterApp.Database succeeded (0.2s) → StarterApp.Database/bin/Debug/net9.0/StarterApp.Database.dll
+  StarterApp.Migrations succeeded (0.2s) → StarterApp.Migrations/bin/Debug/net9.0/StarterApp.Migrations.dll
+  StarterApp net9.0-android failed with 1 error(s) (0.8s)
+    Resources/values/colors.xml : error APT2126: 
+      file not found.
+```
+---
+
 ---
 title: "StarterApp readme"
 parent: StarterApp

@@ -1,0 +1,11 @@
+.git
+.devcontainer
+**/bin/
+**/obj/
+**/__pycache__/
+**/.DS_Store
+**/*.user
+**/*.suo
+**/*.nupkg
+**/*.snupkg
+**/*.log

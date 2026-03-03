@@ -10,9 +10,10 @@ services:
       - "host.docker.internal:host-gateway"  # maps host to container
     environment:
       ADB_SERVER_SOCKET: tcp:host.docker.internal:5037  # make sure container sees host ADB
+      CONNECTION_STRING: Host=db;Port=5432;Username=dev_user;Password=dev_password;Database=devdb
     depends_on:
       db:
-        condition: service_started
+        condition: service_healthy
 
 
   db:
@@ -22,6 +23,12 @@ services:
       POSTGRES_USER: dev_user
       POSTGRES_PASSWORD: dev_password
       POSTGRES_DB: devdb
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dev_user -d devdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
     ports:
       - "5432:5432"
     volumes:

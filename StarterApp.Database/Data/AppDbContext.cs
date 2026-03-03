@@ -1,6 +1,8 @@
 ﻿using System.Reflection;
+using System.Net.Sockets;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Npgsql;
 using StarterApp.Database.Models;
 
 namespace StarterApp.Database.Data;
@@ -17,21 +19,88 @@ public class AppDbContext : DbContext
     {
         if (optionsBuilder.IsConfigured) return;
 
-        var connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING");
+        var connectionString = ResolveConnectionString();
+        optionsBuilder.UseNpgsql(connectionString);
+    }
 
-        if (string.IsNullOrEmpty(connectionString))
+    private static string ResolveConnectionString()
+    {
+        var envConnectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING");
+        if (!string.IsNullOrWhiteSpace(envConnectionString))
         {
-            var a = Assembly.GetExecutingAssembly();
-            using var stream = a.GetManifestResourceStream("StarterApp.Database.appsettings.json");
-
-            var config = new ConfigurationBuilder()
-                .AddJsonStream(stream)
-                .Build();
-
-            connectionString = config.GetConnectionString("DevelopmentConnection");
+            return envConnectionString;
         }
 
-        optionsBuilder.UseNpgsql(connectionString);
+        var configuredConnectionString = GetConfiguredConnectionString();
+        var defaultConnectionString = configuredConnectionString
+            ?? "Host=db;Port=5432;Username=dev_user;Password=dev_password;Database=devdb";
+
+        var hostCandidates = OperatingSystem.IsAndroid()
+            ? new[] { "10.0.2.2", "host.docker.internal", "localhost", "db" }
+            : new[] { "db", "localhost", "host.docker.internal", "10.0.2.2" };
+
+        var candidates = new List<string> { defaultConnectionString };
+        foreach (var host in hostCandidates)
+        {
+            var candidateBuilder = new NpgsqlConnectionStringBuilder(defaultConnectionString)
+            {
+                Host = host,
+                Port = 5432
+            };
+
+            var candidate = candidateBuilder.ConnectionString;
+            if (!candidates.Contains(candidate, StringComparer.OrdinalIgnoreCase))
+            {
+                candidates.Add(candidate);
+            }
+        }
+
+        foreach (var candidate in candidates)
+        {
+            if (CanReachPostgres(candidate))
+            {
+                return candidate;
+            }
+        }
+
+        return defaultConnectionString;
+    }
+
+    private static string? GetConfiguredConnectionString()
+    {
+        var assembly = Assembly.GetExecutingAssembly();
+        using var stream = assembly.GetManifestResourceStream("StarterApp.Database.appsettings.json");
+        if (stream is null)
+        {
+            return null;
+        }
+
+        var config = new ConfigurationBuilder()
+            .AddJsonStream(stream)
+            .Build();
+
+        return config.GetConnectionString("DevelopmentConnection");
+    }
+
+    private static bool CanReachPostgres(string connectionString)
+    {
+        try
+        {
+            var builder = new NpgsqlConnectionStringBuilder(connectionString);
+            if (string.IsNullOrWhiteSpace(builder.Host))
+            {
+                return false;
+            }
+
+            var port = builder.Port > 0 ? builder.Port : 5432;
+            using var client = new TcpClient();
+            var connectTask = client.ConnectAsync(builder.Host, port);
+            return connectTask.Wait(TimeSpan.FromSeconds(1)) && client.Connected;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     public DbSet<Role> Roles { get; set; }

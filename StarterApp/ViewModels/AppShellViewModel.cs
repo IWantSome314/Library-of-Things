@@ -17,7 +17,7 @@ namespace StarterApp.ViewModels
     public partial class AppShellViewModel : BaseViewModel
     {
         /// @brief Authentication service for managing user authentication
-        private readonly IAuthenticationService _authService;
+        private readonly IJWTAuthenticationService _authService;
         
         /// @brief Navigation service for managing page navigation
         private readonly INavigationService _navigationService;
@@ -37,7 +37,7 @@ namespace StarterApp.ViewModels
         /// @param authService The authentication service instance
         /// @param navigationService The navigation service instance
         /// @details Sets up authentication state change event handler and initializes the title
-        public AppShellViewModel(IAuthenticationService authService, INavigationService navigationService)
+        public AppShellViewModel(IJWTAuthenticationService authService, INavigationService navigationService)
         {
             _authService = authService;
             _navigationService = navigationService;

@@ -34,7 +34,7 @@ public partial class UserDetailViewModel : INotifyPropertyChanged
     private readonly INavigationService _navigationService;
     
     /// <summary>Authentication service for user role verification</summary>
-    private readonly IAuthenticationService _authService;
+    private readonly IJWTAuthenticationService _authService;
 
     /// <summary>The ID of the user being edited (0 for new users)</summary>
     private int _userId;
@@ -85,7 +85,7 @@ public partial class UserDetailViewModel : INotifyPropertyChanged
     /// <param name="context">The database context for data operations</param>
     /// <param name="navigationService">The navigation service for page transitions</param>
     /// <param name="authService">The authentication service for role verification</param>
-    public UserDetailViewModel(AppDbContext context, INavigationService navigationService, IAuthenticationService authService)
+    public UserDetailViewModel(AppDbContext context, INavigationService navigationService, IJWTAuthenticationService authService)
     {
         _context = context;
         _navigationService = navigationService;

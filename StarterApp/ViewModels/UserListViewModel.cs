@@ -34,7 +34,7 @@ public partial class UserListViewModel : INotifyPropertyChanged
     private readonly INavigationService _navigationService;
 
     /// <summary>Service for authentication and authorization checks</summary>
-    private readonly IAuthenticationService _authenticationService;
+    private readonly IJWTAuthenticationService _jwtAuthenticationService;
 
     /// <summary>Complete collection of users loaded from database</summary>
     private ObservableCollection<UserListItem> _users = new();
@@ -59,17 +59,17 @@ public partial class UserListViewModel : INotifyPropertyChanged
     /// </summary>
     /// <param name="context">Database context for user data access</param>
     /// <param name="navigationService">Service for page navigation</param>
-    /// <param name="authenticationService">Service for authentication and authorization</param>
+    /// <param name="JWTAuthenticationService">Service for authentication and authorization</param>
     /// <exception cref="ArgumentNullException">Thrown when any parameter is null</exception>
     /// <remarks>
     /// The constructor automatically initiates user loading in the background
     /// and sets up role filter options based on available roles in the system.
     /// </remarks>
-    public UserListViewModel(AppDbContext context, INavigationService navigationService, IAuthenticationService authenticationService)
+    public UserListViewModel(AppDbContext context, INavigationService navigationService, IJWTAuthenticationService jwtAuthenticationService)
     {
         _context = context;
         _navigationService = navigationService;
-        _authenticationService = authenticationService;
+        _jwtAuthenticationService = jwtAuthenticationService;
 
         LoadUsersCommand = new Command(async () => await LoadUsersAsync());
         RefreshCommand = new Command(async () => await RefreshUsersAsync());
@@ -214,7 +214,7 @@ public partial class UserListViewModel : INotifyPropertyChanged
     /// This property is used for conditional UI display and access control.
     /// Only admin users can access the user list functionality.
     /// </remarks>
-    public bool IsAdmin => _authenticationService.HasRole(RoleConstants.Admin);
+    public bool IsAdmin => _jwtAuthenticationService.HasRole(RoleConstants.Admin);
 
     /// <summary>Gets the command for loading users from the database</summary>
     /// <value>Command that executes LoadUsersAsync when invoked</value>

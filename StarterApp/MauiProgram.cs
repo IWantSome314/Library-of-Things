@@ -4,6 +4,7 @@ using StarterApp.Database.Data;
 using StarterApp.Views;
 using System.Diagnostics;
 using StarterApp.Services;
+using System.Net.Http.Headers;
 
 namespace StarterApp;
 
@@ -22,7 +23,19 @@ public static class MauiProgram
 
         builder.Services.AddDbContext<AppDbContext>();
 
-        builder.Services.AddSingleton<IAuthenticationService, AuthenticationService>();
+        // Configure JWT auth service over a shared HttpClient.
+        builder.Services.AddSingleton(sp =>
+        {
+            var apiBaseUrl = Environment.GetEnvironmentVariable("AUTH_API_BASE_URL") ?? "http://10.0.2.2:8080";
+            var client = new HttpClient
+            {
+                BaseAddress = new Uri(apiBaseUrl)
+            };
+            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            return client;
+        });
+        builder.Services.AddSingleton<IJWTAuthenticationService>(sp =>
+            new JWTAuthenticationService(sp.GetRequiredService<HttpClient>()));
         builder.Services.AddSingleton<INavigationService, NavigationService>();
 
         builder.Services.AddSingleton<AppShellViewModel>();

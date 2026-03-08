@@ -15,7 +15,7 @@ namespace StarterApp.ViewModels;
 public partial class LoginViewModel : BaseViewModel
 {
     /// @brief Authentication service for managing user login
-    private readonly IAuthenticationService _authService;
+    private readonly IJWTAuthenticationService _authService;
     
     /// @brief Navigation service for managing page navigation
     private readonly INavigationService _navigationService;
@@ -53,7 +53,7 @@ public partial class LoginViewModel : BaseViewModel
     /// @param authService The authentication service instance
     /// @param navigationService The navigation service instance
     /// @details Sets up the required services and initializes the title
-    public LoginViewModel(IAuthenticationService authService, INavigationService navigationService)
+    public LoginViewModel(IJWTAuthenticationService authService, INavigationService navigationService)
     {
         _authService = authService;
         _navigationService = navigationService;

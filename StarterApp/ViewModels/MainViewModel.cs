@@ -107,6 +107,12 @@ public partial class MainViewModel : BaseViewModel
         await _navigationService.NavigateToAsync("TempPage");
     }
 
+    [RelayCommand]
+    private async Task NavigateToItemsAsync()
+    {
+        await _navigationService.NavigateToAsync("ItemListPage");
+    }
+
 
     /// @brief Navigates to the user list page
     /// @details Relay command that navigates to the user management page, admin only

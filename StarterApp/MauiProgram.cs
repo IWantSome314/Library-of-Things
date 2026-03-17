@@ -4,6 +4,7 @@ using StarterApp.Database.Data;
 using StarterApp.Views;
 using System.Diagnostics;
 using StarterApp.Services;
+using System.Net.Http.Headers;
 
 namespace StarterApp;
 
@@ -22,7 +23,19 @@ public static class MauiProgram
 
         builder.Services.AddDbContext<AppDbContext>();
 
-        builder.Services.AddSingleton<IAuthenticationService, AuthenticationService>();
+        builder.Services.AddSingleton(sp =>
+        {
+            var apiBaseUrl = Environment.GetEnvironmentVariable("AUTH_API_BASE_URL") ?? "http://localhost:8080";
+            var client = new HttpClient
+            {
+                BaseAddress = new Uri(apiBaseUrl)
+            };
+            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            return client;
+        });
+
+        builder.Services.AddSingleton<IAuthenticationService, JWTAuthenticationService>();
+        builder.Services.AddSingleton<IItemApiService, ItemApiService>();
         builder.Services.AddSingleton<INavigationService, NavigationService>();
 
         builder.Services.AddSingleton<AppShellViewModel>();
@@ -39,6 +52,10 @@ public static class MauiProgram
         builder.Services.AddTransient<UserListPage>();
         builder.Services.AddTransient<UserDetailPage>();
         builder.Services.AddTransient<UserDetailViewModel>();
+        builder.Services.AddTransient<ItemListViewModel>();
+        builder.Services.AddTransient<ItemListPage>();
+        builder.Services.AddTransient<ItemDetailViewModel>();
+        builder.Services.AddTransient<ItemDetailPage>();
         builder.Services.AddSingleton<TempViewModel>();
         builder.Services.AddTransient<TempPage>();
 

@@ -15,7 +15,15 @@ public partial class App : Application
 		Routing.RegisterRoute(nameof(Views.RegisterPage), typeof(Views.RegisterPage));
 		Routing.RegisterRoute(nameof(Views.UserListPage), typeof(Views.UserListPage));
 		Routing.RegisterRoute(nameof(Views.UserDetailPage), typeof(Views.UserDetailPage));
+		Routing.RegisterRoute(nameof(Views.ItemListPage), typeof(Views.ItemListPage));
+		Routing.RegisterRoute(nameof(Views.ItemDetailPage), typeof(Views.ItemDetailPage));
 		Routing.RegisterRoute(nameof(Views.TempPage), typeof(Views.TempPage));
+
+		var authService = _serviceProvider.GetService(typeof(StarterApp.Services.IAuthenticationService)) as StarterApp.Services.IAuthenticationService;
+		if (authService != null)
+		{
+			_ = Task.Run(authService.InitializeAsync);
+		}
 	}
 
 	protected override Window CreateWindow(IActivationState? activationState)

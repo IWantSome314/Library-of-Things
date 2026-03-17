@@ -26,6 +26,8 @@ public class User
 
     // Navigation properties
     public List<UserRole> UserRoles { get; set; } = new List<UserRole>();
+    public List<Item> OwnedItems { get; set; } = new List<Item>();
+    public List<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
     
     [NotMapped]
     public string FullName => $"{FirstName} {LastName}";

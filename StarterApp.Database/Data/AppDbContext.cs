@@ -26,18 +26,18 @@ public class AppDbContext : DbContext
     private static string ResolveConnectionString()
     {
         var envConnectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING");
-        if (!string.IsNullOrWhiteSpace(envConnectionString))
+        if (!string.IsNullOrWhiteSpace(envConnectionString) && CanReachPostgres(envConnectionString))
         {
             return envConnectionString;
         }
 
         var configuredConnectionString = GetConfiguredConnectionString();
         var defaultConnectionString = configuredConnectionString
-            ?? "Host=db;Port=5432;Username=dev_user;Password=dev_password;Database=devdb";
+            ?? "Host=localhost;Port=5432;Username=dev_user;Password=dev_password;Database=devdb";
 
         var hostCandidates = OperatingSystem.IsAndroid()
             ? new[] { "10.0.2.2", "host.docker.internal", "localhost", "db" }
-            : new[] { "db", "localhost", "host.docker.internal", "10.0.2.2" };
+            : new[] { "localhost", "host.docker.internal", "10.0.2.2", "db" };
 
         var candidates = new List<string> { defaultConnectionString };
         foreach (var host in hostCandidates)
@@ -106,6 +106,8 @@ public class AppDbContext : DbContext
     public DbSet<Role> Roles { get; set; }
     public DbSet<User> Users { get; set; }
     public DbSet<UserRole> UserRoles { get; set; }
+    public DbSet<RefreshToken> RefreshTokens { get; set; }
+    public DbSet<Item> Items { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -142,6 +144,33 @@ public class AppDbContext : DbContext
             entity.HasOne(ur => ur.Role)
                   .WithMany(r => r.UserRoles)
                   .HasForeignKey(ur => ur.RoleId);
+        });
+
+        modelBuilder.Entity<Item>(entity =>
+        {
+            entity.HasIndex(i => i.OwnerUserId);
+            entity.Property(i => i.Title).HasMaxLength(150);
+            entity.Property(i => i.Description).HasMaxLength(2000);
+            entity.Property(i => i.Category).HasMaxLength(100);
+            entity.Property(i => i.Location).HasMaxLength(200);
+            entity.Property(i => i.DailyRate).HasPrecision(10, 2);
+
+            entity.HasOne(i => i.OwnerUser)
+                  .WithMany(u => u.OwnedItems)
+                  .HasForeignKey(i => i.OwnerUserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<RefreshToken>(entity =>
+        {
+            entity.HasIndex(rt => rt.TokenHash).IsUnique();
+            entity.HasIndex(rt => rt.UserId);
+            entity.Property(rt => rt.TokenHash).HasMaxLength(128);
+
+            entity.HasOne(rt => rt.User)
+                  .WithMany(u => u.RefreshTokens)
+                  .HasForeignKey(rt => rt.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
         });
     }
 

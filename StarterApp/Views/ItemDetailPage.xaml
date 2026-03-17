@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage x:Class="StarterApp.Views.ItemDetailPage"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:StarterApp.ViewModels"
+             x:DataType="viewmodels:ItemDetailViewModel"
+             Title="{Binding Title}">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Home"
+                     Command="{Binding NavigateToDashboardCommand}" />
+    </ContentPage.ToolbarItems>
+
+    <ScrollView>
+        <VerticalStackLayout Padding="16" Spacing="12">
+            <Label Text="Owner" FontAttributes="Bold" />
+            <Label Text="{Binding OwnerDisplay}" />
+
+            <Label Text="Title" FontAttributes="Bold" />
+            <Entry Text="{Binding TitleText}" IsEnabled="{Binding CanEdit}" />
+
+            <Label Text="Description" FontAttributes="Bold" />
+            <Editor Text="{Binding DescriptionText}" AutoSize="TextChanges" IsEnabled="{Binding CanEdit}" />
+
+            <Label Text="Category" FontAttributes="Bold" />
+            <Entry Text="{Binding Category}" IsEnabled="{Binding CanEdit}" />
+
+            <Label Text="Daily Rate" FontAttributes="Bold" />
+            <Entry Text="{Binding DailyRateText}" Keyboard="Numeric" IsEnabled="{Binding CanEdit}" />
+
+            <Label Text="Location" FontAttributes="Bold" />
+            <Entry Text="{Binding Location}" IsEnabled="{Binding CanEdit}" />
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                <VerticalStackLayout>
+                    <Label Text="Latitude" FontAttributes="Bold" />
+                    <Entry Text="{Binding LatitudeText}" Keyboard="Numeric" IsEnabled="{Binding CanEdit}" />
+                </VerticalStackLayout>
+                <VerticalStackLayout Grid.Column="1">
+                    <Label Text="Longitude" FontAttributes="Bold" />
+                    <Entry Text="{Binding LongitudeText}" Keyboard="Numeric" IsEnabled="{Binding CanEdit}" />
+                </VerticalStackLayout>
+            </Grid>
+
+            <HorizontalStackLayout Spacing="10" Margin="0,10,0,0">
+                <Button Text="Back" Command="{Binding NavigateBackCommand}" HorizontalOptions="FillAndExpand" />
+                <Button Text="Save" Command="{Binding SaveCommand}" IsVisible="{Binding CanEdit}" HorizontalOptions="FillAndExpand" />
+            </HorizontalStackLayout>
+
+            <Border IsVisible="{Binding HasError}"
+                    BackgroundColor="{AppThemeBinding Light=#FFEBEE, Dark=#2A1414}"
+                    Stroke="{AppThemeBinding Light=#EF5350, Dark=#EF5350}"
+                    Padding="10">
+                <Label Text="{Binding ErrorMessage}" />
+            </Border>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

@@ -13,7 +13,9 @@
         }
     },
     "remoteUser": "root",
+    "forwardPorts": [8080],
     "portsAttributes": {
+        "8080": { "label": "Auth API", "onAutoForward": "silent" },
         "5037": { "onAutoForward": "ignore" },
         "5554": { "onAutoForward": "silent" },
         "5555": { "onAutoForward": "silent" }

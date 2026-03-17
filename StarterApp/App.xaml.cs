@@ -1,4 +1,5 @@
 ﻿using StarterApp.ViewModels;
+using StarterApp.Services;
 
 namespace StarterApp;
 
@@ -9,6 +10,11 @@ public partial class App : Application
 	{
 		_serviceProvider = serviceProvider;
 		InitializeComponent();
+
+		if (_serviceProvider.GetService<IJWTAuthenticationService>() is { } authService)
+		{
+			_ = Task.Run(authService.InitializeAsync);
+		}
 
 		Routing.RegisterRoute(nameof(Views.MainPage), typeof(Views.MainPage));
 		Routing.RegisterRoute(nameof(Views.LoginPage), typeof(Views.LoginPage));

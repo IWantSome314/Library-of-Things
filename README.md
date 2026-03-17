@@ -38,6 +38,8 @@ basic features including:
 This version of the app uses PostgreSQL for data storage and Entity Framework Core for object-relational mapping
 and migrations.
 
+The app now uses JWT-based authentication through a backend API (`StarterApp.Api`) instead of local-only login.
+
 To fully understand how it works, you should follow an appropriate set of tutorials such as 
 [this one](https://edinburgh-napier.github.io/SET09102/tutorials/csharp/) which covers all of the main
 concepts and techniques used here. However, if you want to jump straight in and work out any problems
@@ -63,6 +65,18 @@ This app is built using the following tool versions.
 
 
 ## Getting started
+
+### JWT API Architecture
+
+Authentication now flows through HTTP endpoints:
+
+* `POST /auth/token` issues access + refresh tokens
+* `POST /auth/refresh` rotates refresh token and issues a new access token
+* `POST /auth/register` creates new user accounts
+* `POST /auth/change-password` requires a valid Bearer token
+* `GET /auth/me` requires a valid Bearer token
+
+The MAUI client stores tokens securely and refreshes access tokens automatically when they expire.
 
 ### Prerequisites
 
@@ -103,6 +117,34 @@ Before using this app, ensure you have:
    dotnet build
    dotnet run
    ```
+
+### Run Database + API with Docker
+
+From the repository root:
+
+```bash
+docker compose up -d db api
+```
+
+API will be available on `http://localhost:8080`.
+
+Swagger UI:
+
+`http://localhost:8080/swagger`
+
+If you are running Android emulator builds, the MAUI app default base URL is already set to `http://10.0.2.2:8080`.
+
+For other environments, set:
+
+```bash
+AUTH_API_BASE_URL=http://<your-host>:8080
+```
+
+You should also set a secure JWT signing key in container or environment configuration:
+
+```bash
+Jwt__SigningKey=<long-random-secret-at-least-32-chars>
+```
 
 ### Tutorial
 

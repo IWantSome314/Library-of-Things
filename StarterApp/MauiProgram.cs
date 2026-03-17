@@ -26,7 +26,8 @@ public static class MauiProgram
         // Configure JWT auth service over a shared HttpClient.
         builder.Services.AddSingleton(sp =>
         {
-            var apiBaseUrl = Environment.GetEnvironmentVariable("AUTH_API_BASE_URL") ?? "http://10.0.2.2:8080";
+            // Use a fixed base URL to avoid stale environment overrides.
+            var apiBaseUrl = "http://localhost:8080";
             var client = new HttpClient
             {
                 BaseAddress = new Uri(apiBaseUrl)

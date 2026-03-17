@@ -9,6 +9,8 @@ public interface IJWTAuthenticationService
     bool IsAuthenticated { get; }
     User? CurrentUser { get; }
     List<string> CurrentUserRoles { get; }
+    Task InitializeAsync();
+    Task<bool> EnsureValidTokenAsync();
 
     Task<AuthenticationResult> LoginAsync(string email, string password);
     Task<AuthenticationResult> RegisterAsync(string firstName, string lastName, string email, string password);

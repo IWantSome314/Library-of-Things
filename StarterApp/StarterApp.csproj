@@ -40,14 +40,19 @@
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)' == 'Debug'">
-		<AndroidFastDeployment>false</AndroidFastDeployment>
-		<EmbedAssembliesIntoApk>True</EmbedAssembliesIntoApk>
-		<AndroidUseSharedRuntime>False</AndroidUseSharedRuntime>
+		<AndroidFastDeployment>true</AndroidFastDeployment>
+		<EmbedAssembliesIntoApk>False</EmbedAssembliesIntoApk>
+		<AndroidUseSharedRuntime>True</AndroidUseSharedRuntime>
 		<AndroidEnableAssemblyCompression>False</AndroidEnableAssemblyCompression>
 		<AndroidLinkMode>None</AndroidLinkMode>
 		<RuntimeIdentifier>android-x64</RuntimeIdentifier>
 	    <Nullable>enable</Nullable>
         <Optimize>false</Optimize>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)' == 'Debug' And $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+		<RunAnalyzers>false</RunAnalyzers>
+		<RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
 	</PropertyGroup>
 
 	<ItemGroup>

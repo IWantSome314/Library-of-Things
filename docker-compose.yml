@@ -1,5 +1,23 @@
 services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    ports:
+      - "8080:8080"
+    environment:
+      CONNECTION_STRING: Host=db;Port=5432;Username=dev_user;Password=dev_password;Database=devdb
+      Jwt__Issuer: StarterApp.Api
+      Jwt__Audience: StarterApp.Client
+      Jwt__SigningKey: ffetr45t453tegv5yhgrddb#oH.t065z=5wU#4t\kccJ5#vH#83n5
+      Jwt__AccessTokenMinutes: 15
+      Jwt__RefreshTokenDays: 7
+    depends_on:
+      db:
+        condition: service_healthy
+
   app:
+    profiles: ["devtools"]
     build:
       context: .
       dockerfile: Dockerfile

@@ -26,7 +26,7 @@ public class AppDbContext : DbContext
     private static string ResolveConnectionString()
     {
         var envConnectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING");
-        if (!string.IsNullOrWhiteSpace(envConnectionString) && CanReachPostgres(envConnectionString))
+        if (!string.IsNullOrWhiteSpace(envConnectionString))
         {
             return envConnectionString;
         }

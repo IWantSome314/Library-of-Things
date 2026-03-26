@@ -37,7 +37,7 @@ public class ItemApiService : IItemApiService
         using var response = await _httpClient.PostAsJsonAsync("/items", request, cancellationToken);
         if (response.StatusCode == HttpStatusCode.Unauthorized)
         {
-            var refreshed = await _authService.EnsureValidTokenAsync();
+            var refreshed = await _authService.ForceRefreshTokenAsync();
             if (refreshed)
             {
                 using var retry = await _httpClient.PostAsJsonAsync("/items", request, cancellationToken);
@@ -55,7 +55,7 @@ public class ItemApiService : IItemApiService
         using var response = await _httpClient.PutAsJsonAsync($"/items/{id}", request, cancellationToken);
         if (response.StatusCode == HttpStatusCode.Unauthorized)
         {
-            var refreshed = await _authService.EnsureValidTokenAsync();
+            var refreshed = await _authService.ForceRefreshTokenAsync();
             if (refreshed)
             {
                 using var retry = await _httpClient.PutAsJsonAsync($"/items/{id}", request, cancellationToken);

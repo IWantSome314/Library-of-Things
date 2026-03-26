@@ -14,6 +14,7 @@ public interface IAuthenticationService
     Task<AuthenticationResult> RegisterAsync(string firstName, string lastName, string email, string password);
     Task InitializeAsync();
     Task<bool> EnsureValidTokenAsync();
+    Task<bool> ForceRefreshTokenAsync();
     Task LogoutAsync();
     
     bool HasRole(string roleName);

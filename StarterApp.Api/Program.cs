@@ -423,28 +423,42 @@ static async Task EnsureDefaultRolesAsync(AppDbContext db)
 
 static async Task ApplyMigrationsWithRecoveryAsync(AppDbContext db)
 {
-    try
+    const int maxAttempts = 10;
+    var delay = TimeSpan.FromSeconds(2);
+
+    for (var attempt = 1; attempt <= maxAttempts; attempt++)
     {
-        await db.Database.MigrateAsync();
-        return;
-    }
-    catch (PostgresException ex) when (ex.SqlState == "42P07")
-    {
-        // Legacy bootstrap recovery: schema exists but migrations history is missing.
-        await db.Database.ExecuteSqlRawAsync(@"
+        try
+        {
+            await db.Database.MigrateAsync();
+            return;
+        }
+        catch (NpgsqlException) when (attempt < maxAttempts)
+        {
+            await Task.Delay(delay);
+            continue;
+        }
+        catch (PostgresException ex) when (ex.SqlState == "42P07")
+        {
+            // Legacy bootstrap recovery: schema exists but migrations history is missing.
+            await db.Database.ExecuteSqlRawAsync(@"
 CREATE TABLE IF NOT EXISTS ""__EFMigrationsHistory"" (
     ""MigrationId"" character varying(150) NOT NULL,
     ""ProductVersion"" character varying(32) NOT NULL,
     CONSTRAINT ""PK___EFMigrationsHistory"" PRIMARY KEY (""MigrationId"")
 );");
 
-        await db.Database.ExecuteSqlRawAsync(@"
+            await db.Database.ExecuteSqlRawAsync(@"
 INSERT INTO ""__EFMigrationsHistory"" (""MigrationId"", ""ProductVersion"")
 VALUES ('20260210141124_InitialCreate', '9.0.6')
 ON CONFLICT (""MigrationId"") DO NOTHING;");
 
-        await db.Database.MigrateAsync();
+            await db.Database.MigrateAsync();
+            return;
+        }
     }
+
+    throw new InvalidOperationException("Database did not become ready in time for migrations.");
 }
 
 static class MiniValidator

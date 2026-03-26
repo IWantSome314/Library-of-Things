@@ -1,0 +1,270 @@
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (41ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT "MigrationId", "ProductVersion"
+      FROM "__EFMigrationsHistory"
+      ORDER BY "MigrationId";
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (20ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE IF NOT EXISTS "__EFMigrationsHistory" (
+          "MigrationId" character varying(150) NOT NULL,
+          "ProductVersion" character varying(32) NOT NULL,
+          CONSTRAINT "PK___EFMigrationsHistory" PRIMARY KEY ("MigrationId")
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      LOCK TABLE "__EFMigrationsHistory" IN ACCESS EXCLUSIVE MODE
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (4ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT "MigrationId", "ProductVersion"
+      FROM "__EFMigrationsHistory"
+      ORDER BY "MigrationId";
+info: Microsoft.EntityFrameworkCore.Migrations[20405]
+      No migrations were applied. The database is already up to date.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM role AS r)
+info: Microsoft.Hosting.Lifetime[14]
+      Now listening on: http://0.0.0.0:8080
+info: Microsoft.Hosting.Lifetime[0]
+      Application started. Press Ctrl+C to shut down.
+info: Microsoft.Hosting.Lifetime[0]
+      Hosting environment: Production
+info: Microsoft.Hosting.Lifetime[0]
+      Content root path: /workspace/StarterApp.Api
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (23ms) [Parameters=[@__request_Email_0='?'], CommandType='Text', CommandTimeout='30']
+      SELECT u1."Id", u1."CreatedAt", u1."DeletedAt", u1."Email", u1."FirstName", u1."IsActive", u1."LastName", u1."PasswordHash", u1."PasswordSalt", u1."UpdatedAt", s."Id", s."CreatedAt", s."DeletedAt", s."IsActive", s."RoleId", s."UpdatedAt", s."UserId", s."Id0", s."Description", s."IsDefault", s."Name"
+      FROM (
+          SELECT u."Id", u."CreatedAt", u."DeletedAt", u."Email", u."FirstName", u."IsActive", u."LastName", u."PasswordHash", u."PasswordSalt", u."UpdatedAt"
+          FROM users AS u
+          WHERE u."Email" = @__request_Email_0 AND u."IsActive"
+          LIMIT 1
+      ) AS u1
+      LEFT JOIN (
+          SELECT u0."Id", u0."CreatedAt", u0."DeletedAt", u0."IsActive", u0."RoleId", u0."UpdatedAt", u0."UserId", r."Id" AS "Id0", r."Description", r."IsDefault", r."Name"
+          FROM user_role AS u0
+          INNER JOIN role AS r ON u0."RoleId" = r."Id"
+      ) AS s ON u1."Id" = s."UserId"
+      ORDER BY u1."Id", s."Id"
+fail: Microsoft.EntityFrameworkCore.Database.Command[20102]
+      Failed executing DbCommand (25ms) [Parameters=[@p0='?' (DbType = DateTime), @p1='?' (DbType = DateTime), @p2='?' (DbType = Boolean), @p3='?' (DbType = DateTime), @p4='?', @p5='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
+      INSERT INTO refresh_token ("CreatedAtUtc", "ExpiresAtUtc", "IsRevoked", "RevokedAtUtc", "TokenHash", "UserId")
+      VALUES (@p0, @p1, @p2, @p3, @p4, @p5)
+      RETURNING "Id";
+fail: Microsoft.EntityFrameworkCore.Update[10000]
+      An exception occurred in the database while saving changes for context type 'StarterApp.Database.Data.AppDbContext'.
+      Microsoft.EntityFrameworkCore.DbUpdateException: An error occurred while saving the entity changes. See the inner exception for details.
+       ---> Npgsql.PostgresException (0x80004005): 42P01: relation "refresh_token" does not exist
+      
+      POSITION: 13
+         at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+        Exception data:
+          Severity: ERROR
+          SqlState: 42P01
+          MessageText: relation "refresh_token" does not exist
+          Position: 13
+          File: parse_relation.c
+          Line: 1449
+          Routine: parserOpenTable
+         --- End of inner exception stack trace ---
+         at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Storage.RelationalDatabase.SaveChangesAsync(IList`1 entries, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(IList`1 entriesToSave, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(StateManager stateManager, Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+         at Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.NpgsqlExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+      Microsoft.EntityFrameworkCore.DbUpdateException: An error occurred while saving the entity changes. See the inner exception for details.
+       ---> Npgsql.PostgresException (0x80004005): 42P01: relation "refresh_token" does not exist
+      
+      POSITION: 13
+         at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+        Exception data:
+          Severity: ERROR
+          SqlState: 42P01
+          MessageText: relation "refresh_token" does not exist
+          Position: 13
+          File: parse_relation.c
+          Line: 1449
+          Routine: parserOpenTable
+         --- End of inner exception stack trace ---
+         at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Storage.RelationalDatabase.SaveChangesAsync(IList`1 entries, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(IList`1 entriesToSave, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(StateManager stateManager, Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+         at Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.NpgsqlExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+fail: Microsoft.AspNetCore.Server.Kestrel[13]
+      Connection id "0HNKB815RV1AJ", Request id "0HNKB815RV1AJ:00000001": An unhandled exception was thrown by the application.
+      Microsoft.EntityFrameworkCore.DbUpdateException: An error occurred while saving the entity changes. See the inner exception for details.
+       ---> Npgsql.PostgresException (0x80004005): 42P01: relation "refresh_token" does not exist
+      
+      POSITION: 13
+         at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+        Exception data:
+          Severity: ERROR
+          SqlState: 42P01
+          MessageText: relation "refresh_token" does not exist
+          Position: 13
+          File: parse_relation.c
+          Line: 1449
+          Routine: parserOpenTable
+         --- End of inner exception stack trace ---
+         at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Storage.RelationalDatabase.SaveChangesAsync(IList`1 entries, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(IList`1 entriesToSave, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(StateManager stateManager, Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+         at Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.NpgsqlExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+         at Program.<<Main>$>g__SaveRefreshTokenAsync|0_12(AppDbContext db, ITokenService tokenService, Int32 userId, String rawRefreshToken, Int32 refreshTokenDays) in /workspace/StarterApp.Api/Program.cs:line 403
+         at Program.<>c__DisplayClass0_0.<<<Main>$>b__2>d.MoveNext() in /workspace/StarterApp.Api/Program.cs:line 90
+      --- End of stack trace from previous location ---
+         at Microsoft.AspNetCore.Http.RequestDelegateFactory.ExecuteTaskResult[T](Task`1 task, HttpContext httpContext)
+         at Microsoft.AspNetCore.Http.RequestDelegateFactory.<>c__DisplayClass101_2.<<HandleRequestBodyAndCompileRequestDelegateForJson>b__2>d.MoveNext()
+      --- End of stack trace from previous location ---
+         at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+         at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+         at Swashbuckle.AspNetCore.SwaggerUI.SwaggerUIMiddleware.Invoke(HttpContext httpContext)
+         at Swashbuckle.AspNetCore.Swagger.SwaggerMiddleware.Invoke(HttpContext httpContext, ISwaggerProvider swaggerProvider)
+         at Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http.HttpProtocol.ProcessRequests[TContext](IHttpApplication`1 application)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (5ms) [Parameters=[@__request_Email_0='?'], CommandType='Text', CommandTimeout='30']
+      SELECT u1."Id", u1."CreatedAt", u1."DeletedAt", u1."Email", u1."FirstName", u1."IsActive", u1."LastName", u1."PasswordHash", u1."PasswordSalt", u1."UpdatedAt", s."Id", s."CreatedAt", s."DeletedAt", s."IsActive", s."RoleId", s."UpdatedAt", s."UserId", s."Id0", s."Description", s."IsDefault", s."Name"
+      FROM (
+          SELECT u."Id", u."CreatedAt", u."DeletedAt", u."Email", u."FirstName", u."IsActive", u."LastName", u."PasswordHash", u."PasswordSalt", u."UpdatedAt"
+          FROM users AS u
+          WHERE u."Email" = @__request_Email_0 AND u."IsActive"
+          LIMIT 1
+      ) AS u1
+      LEFT JOIN (
+          SELECT u0."Id", u0."CreatedAt", u0."DeletedAt", u0."IsActive", u0."RoleId", u0."UpdatedAt", u0."UserId", r."Id" AS "Id0", r."Description", r."IsDefault", r."Name"
+          FROM user_role AS u0
+          INNER JOIN role AS r ON u0."RoleId" = r."Id"
+      ) AS s ON u1."Id" = s."UserId"
+      ORDER BY u1."Id", s."Id"
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (16ms) [Parameters=[@p0='?' (DbType = DateTime), @p1='?' (DbType = DateTime), @p2='?' (DbType = Boolean), @p3='?' (DbType = DateTime), @p4='?', @p5='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
+      INSERT INTO refresh_token ("CreatedAtUtc", "ExpiresAtUtc", "IsRevoked", "RevokedAtUtc", "TokenHash", "UserId")
+      VALUES (@p0, @p1, @p2, @p3, @p4, @p5)
+      RETURNING "Id";
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (12ms) [Parameters=[@__request_Email_0='?'], CommandType='Text', CommandTimeout='30']
+      SELECT u1."Id", u1."CreatedAt", u1."DeletedAt", u1."Email", u1."FirstName", u1."IsActive", u1."LastName", u1."PasswordHash", u1."PasswordSalt", u1."UpdatedAt", s."Id", s."CreatedAt", s."DeletedAt", s."IsActive", s."RoleId", s."UpdatedAt", s."UserId", s."Id0", s."Description", s."IsDefault", s."Name"
+      FROM (
+          SELECT u."Id", u."CreatedAt", u."DeletedAt", u."Email", u."FirstName", u."IsActive", u."LastName", u."PasswordHash", u."PasswordSalt", u."UpdatedAt"
+          FROM users AS u
+          WHERE u."Email" = @__request_Email_0 AND u."IsActive"
+          LIMIT 1
+      ) AS u1
+      LEFT JOIN (
+          SELECT u0."Id", u0."CreatedAt", u0."DeletedAt", u0."IsActive", u0."RoleId", u0."UpdatedAt", u0."UserId", r."Id" AS "Id0", r."Description", r."IsDefault", r."Name"
+          FROM user_role AS u0
+          INNER JOIN role AS r ON u0."RoleId" = r."Id"
+      ) AS s ON u1."Id" = s."UserId"
+      ORDER BY u1."Id", s."Id"
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (13ms) [Parameters=[@p0='?' (DbType = DateTime), @p1='?' (DbType = DateTime), @p2='?' (DbType = Boolean), @p3='?' (DbType = DateTime), @p4='?', @p5='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
+      INSERT INTO refresh_token ("CreatedAtUtc", "ExpiresAtUtc", "IsRevoked", "RevokedAtUtc", "TokenHash", "UserId")
+      VALUES (@p0, @p1, @p2, @p3, @p4, @p5)
+      RETURNING "Id";
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (145ms) [Parameters=[@__refreshHash_0='?'], CommandType='Text', CommandTimeout='30']
+      SELECT r."Id", r."CreatedAtUtc", r."ExpiresAtUtc", r."IsRevoked", r."RevokedAtUtc", r."TokenHash", r."UserId"
+      FROM refresh_token AS r
+      WHERE r."TokenHash" = @__refreshHash_0
+      LIMIT 1
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (20ms) [Parameters=[@__storedToken_UserId_0='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
+      SELECT u1."Id", u1."CreatedAt", u1."DeletedAt", u1."Email", u1."FirstName", u1."IsActive", u1."LastName", u1."PasswordHash", u1."PasswordSalt", u1."UpdatedAt", s."Id", s."CreatedAt", s."DeletedAt", s."IsActive", s."RoleId", s."UpdatedAt", s."UserId", s."Id0", s."Description", s."IsDefault", s."Name"
+      FROM (
+          SELECT u."Id", u."CreatedAt", u."DeletedAt", u."Email", u."FirstName", u."IsActive", u."LastName", u."PasswordHash", u."PasswordSalt", u."UpdatedAt"
+          FROM users AS u
+          WHERE u."Id" = @__storedToken_UserId_0 AND u."IsActive"
+          LIMIT 1
+      ) AS u1
+      LEFT JOIN (
+          SELECT u0."Id", u0."CreatedAt", u0."DeletedAt", u0."IsActive", u0."RoleId", u0."UpdatedAt", u0."UserId", r."Id" AS "Id0", r."Description", r."IsDefault", r."Name"
+          FROM user_role AS u0
+          INNER JOIN role AS r ON u0."RoleId" = r."Id"
+      ) AS s ON u1."Id" = s."UserId"
+      ORDER BY u1."Id", s."Id"
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (25ms) [Parameters=[@p2='?' (DbType = Int32), @p0='?' (DbType = Boolean), @p1='?' (DbType = DateTime), @p3='?' (DbType = DateTime), @p4='?' (DbType = DateTime), @p5='?' (DbType = Boolean), @p6='?' (DbType = DateTime), @p7='?', @p8='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
+      UPDATE refresh_token SET "IsRevoked" = @p0, "RevokedAtUtc" = @p1
+      WHERE "Id" = @p2;
+      INSERT INTO refresh_token ("CreatedAtUtc", "ExpiresAtUtc", "IsRevoked", "RevokedAtUtc", "TokenHash", "UserId")
+      VALUES (@p3, @p4, @p5, @p6, @p7, @p8)
+      RETURNING "Id";
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[@__request_Email_0='?'], CommandType='Text', CommandTimeout='30']
+      SELECT u1."Id", u1."CreatedAt", u1."DeletedAt", u1."Email", u1."FirstName", u1."IsActive", u1."LastName", u1."PasswordHash", u1."PasswordSalt", u1."UpdatedAt", s."Id", s."CreatedAt", s."DeletedAt", s."IsActive", s."RoleId", s."UpdatedAt", s."UserId", s."Id0", s."Description", s."IsDefault", s."Name"
+      FROM (
+          SELECT u."Id", u."CreatedAt", u."DeletedAt", u."Email", u."FirstName", u."IsActive", u."LastName", u."PasswordHash", u."PasswordSalt", u."UpdatedAt"
+          FROM users AS u
+          WHERE u."Email" = @__request_Email_0 AND u."IsActive"
+          LIMIT 1
+      ) AS u1
+      LEFT JOIN (
+          SELECT u0."Id", u0."CreatedAt", u0."DeletedAt", u0."IsActive", u0."RoleId", u0."UpdatedAt", u0."UserId", r."Id" AS "Id0", r."Description", r."IsDefault", r."Name"
+          FROM user_role AS u0
+          INNER JOIN role AS r ON u0."RoleId" = r."Id"
+      ) AS s ON u1."Id" = s."UserId"
+      ORDER BY u1."Id", s."Id"
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[@__request_Email_0='?'], CommandType='Text', CommandTimeout='30']
+      SELECT u1."Id", u1."CreatedAt", u1."DeletedAt", u1."Email", u1."FirstName", u1."IsActive", u1."LastName", u1."PasswordHash", u1."PasswordSalt", u1."UpdatedAt", s."Id", s."CreatedAt", s."DeletedAt", s."IsActive", s."RoleId", s."UpdatedAt", s."UserId", s."Id0", s."Description", s."IsDefault", s."Name"
+      FROM (
+          SELECT u."Id", u."CreatedAt", u."DeletedAt", u."Email", u."FirstName", u."IsActive", u."LastName", u."PasswordHash", u."PasswordSalt", u."UpdatedAt"
+          FROM users AS u
+          WHERE u."Email" = @__request_Email_0 AND u."IsActive"
+          LIMIT 1
+      ) AS u1
+      LEFT JOIN (
+          SELECT u0."Id", u0."CreatedAt", u0."DeletedAt", u0."IsActive", u0."RoleId", u0."UpdatedAt", u0."UserId", r."Id" AS "Id0", r."Description", r."IsDefault", r."Name"
+          FROM user_role AS u0
+          INNER JOIN role AS r ON u0."RoleId" = r."Id"
+      ) AS s ON u1."Id" = s."UserId"
+      ORDER BY u1."Id", s."Id"
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (5ms) [Parameters=[@p0='?' (DbType = DateTime), @p1='?' (DbType = DateTime), @p2='?' (DbType = Boolean), @p3='?' (DbType = DateTime), @p4='?', @p5='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
+      INSERT INTO refresh_token ("CreatedAtUtc", "ExpiresAtUtc", "IsRevoked", "RevokedAtUtc", "TokenHash", "UserId")
+      VALUES (@p0, @p1, @p2, @p3, @p4, @p5)
+      RETURNING "Id";

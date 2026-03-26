@@ -237,7 +237,13 @@ public class JWTAuthenticationService : IAuthenticationService
         return await RefreshAccessTokenAsync();
     }
 
-    private async Task<bool> RefreshAccessTokenAsync()
+    public async Task<bool> ForceRefreshTokenAsync()
+    {
+        await InitializeAsync();
+        return await RefreshAccessTokenAsync(forceRefresh: true);
+    }
+
+    private async Task<bool> RefreshAccessTokenAsync(bool forceRefresh = false)
     {
         if (string.IsNullOrWhiteSpace(_refreshToken))
         {
@@ -247,7 +253,7 @@ public class JWTAuthenticationService : IAuthenticationService
         await _refreshLock.WaitAsync();
         try
         {
-            if (_tokenExpirationUtc > DateTime.UtcNow.AddSeconds(60) && !string.IsNullOrWhiteSpace(_accessToken))
+            if (!forceRefresh && _tokenExpirationUtc > DateTime.UtcNow.AddSeconds(60) && !string.IsNullOrWhiteSpace(_accessToken))
             {
                 return true;
             }

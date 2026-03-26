@@ -428,3 +428,9 @@ Use these if asked technical questions in demo:
   - Show `/auth/token` returns token pair, `/auth/me` works with valid token, returns 401 with invalid token, `/auth/refresh` returns new tokens.
 - "How do you show engineering quality?"
   - Explain MVVM + interface-driven services + API boundaries + documented troubleshooting + repeatable endpoint demo steps.
+
+## Fixes on March 26, 2026
+
+- **Database Migration Desync Resolved:** Addressed an issue where EF Core believed the database was fully up to date, but the `refresh_token` and `item` tables were missing. This caused the API to hard crash (HTTP 500) during token generation and saving after successful password validation. Manually reconstructed the tables in Postgres matching the orphaned Entity Framework mappings.
+- **Port Matching \& ADB Reverse Routing Setup:** Confirmed the API required running on a port visible to the Android Emulator. Used `ASPNETCORE_URLS="http://0.0.0.0:8080"` and `adb reverse tcp:8080 tcp:8080` to solve the "unable to reach auth server" `HttpRequestException` in MAUI.
+- **Removed Orphaned Migrations:** Addressed an issue where `.cs` migration files were tracked but their associated `.Designer.cs` metadata files were missing, which caused .NET Core to silently completely ignore pending migrations.

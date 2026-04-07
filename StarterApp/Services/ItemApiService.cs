@@ -7,16 +7,17 @@ namespace StarterApp.Services;
 public class ItemApiService : IItemApiService
 {
     private readonly HttpClient _httpClient;
-    private readonly IAuthenticationService _authService;
     private readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web)
     {
         PropertyNameCaseInsensitive = true
     };
 
-    public ItemApiService(HttpClient httpClient, IAuthenticationService authService)
+    // The injected HttpClient ("ApiClient") automatically handles JWT authentication 
+    // via the AuthenticationInterceptor configured in MauiProgram.cs.
+    // No manual token validation or HTTP 401 retries are required here.
+    public ItemApiService(HttpClient httpClient)
     {
         _httpClient = httpClient;
-        _authService = authService;
     }
 
     public async Task<List<ItemSummaryDto>> GetItemsAsync(CancellationToken cancellationToken = default)
@@ -32,49 +33,14 @@ public class ItemApiService : IItemApiService
 
     public async Task<int> CreateItemAsync(UpsertItemDto request, CancellationToken cancellationToken = default)
     {
-        await EnsureAuthenticatedAsync();
-
         using var response = await _httpClient.PostAsJsonAsync("/items", request, cancellationToken);
-        if (response.StatusCode == HttpStatusCode.Unauthorized)
-        {
-            var refreshed = await _authService.ForceRefreshTokenAsync();
-            if (refreshed)
-            {
-                using var retry = await _httpClient.PostAsJsonAsync("/items", request, cancellationToken);
-                return await ReadCreateResponseAsync(retry);
-            }
-        }
-
         return await ReadCreateResponseAsync(response);
     }
 
     public async Task UpdateItemAsync(int id, UpsertItemDto request, CancellationToken cancellationToken = default)
     {
-        await EnsureAuthenticatedAsync();
-
         using var response = await _httpClient.PutAsJsonAsync($"/items/{id}", request, cancellationToken);
-        if (response.StatusCode == HttpStatusCode.Unauthorized)
-        {
-            var refreshed = await _authService.ForceRefreshTokenAsync();
-            if (refreshed)
-            {
-                using var retry = await _httpClient.PutAsJsonAsync($"/items/{id}", request, cancellationToken);
-                await EnsureSuccessWithMessageAsync(retry);
-                return;
-            }
-        }
-
         await EnsureSuccessWithMessageAsync(response);
-    }
-
-    private async Task EnsureAuthenticatedAsync()
-    {
-        await _authService.InitializeAsync();
-        var valid = await _authService.EnsureValidTokenAsync();
-        if (!valid)
-        {
-            throw new InvalidOperationException("You must be logged in to perform this action.");
-        }
     }
 
     private async Task<int> ReadCreateResponseAsync(HttpResponseMessage response)
@@ -98,12 +64,12 @@ public class ItemApiService : IItemApiService
             return;
         }
 
-        var body = await response.Content.ReadAsStringAsync();
-        if (response.StatusCode == HttpStatusCode.Forbidden)
+        if (response.StatusCode == HttpStatusCode.Unauthorized || response.StatusCode == HttpStatusCode.Forbidden)
         {
-            throw new InvalidOperationException("Only the owner can update this item.");
+            throw new InvalidOperationException("You must be logged in and authorized to perform this action.");
         }
 
+        var body = await response.Content.ReadAsStringAsync();
         if (!string.IsNullOrWhiteSpace(body))
         {
             throw new InvalidOperationException($"API request failed ({(int)response.StatusCode}): {body}");

@@ -51,6 +51,7 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await ApplyMigrationsWithRecoveryAsync(db);
     await EnsureDefaultRolesAsync(db);
+    await EnsureMockDataAsync(db);
 }
 
 app.UseSwagger();
@@ -459,6 +460,84 @@ ON CONFLICT (""MigrationId"") DO NOTHING;");
     }
 
     throw new InvalidOperationException("Database did not become ready in time for migrations.");
+}
+
+static async Task EnsureMockDataAsync(AppDbContext db)
+{
+    if (await db.Items.AnyAsync())
+    {
+        return;
+    }
+
+    var defaultUser = await db.Users.FirstOrDefaultAsync();
+    if (defaultUser == null)
+    {
+        var salt = BCrypt.Net.BCrypt.GenerateSalt();
+        defaultUser = new User
+        {
+            FirstName = "Alice",
+            LastName = "Mock",
+            Email = "mock@example.com",
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("Password123!", salt),
+            PasswordSalt = salt,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+        db.Users.Add(defaultUser);
+        await db.SaveChangesAsync();
+    }
+
+    var items = new[]
+    {
+        new Item
+        {
+            Title = "Makita Power Drill",
+            Description = "Professional 18V power drill with extra batteries.",
+            Category = "Tools",
+            Location = "London",
+            DailyRate = 12.50m,
+            OwnerUserId = defaultUser.Id,
+            IsActive = true,
+            CreatedAtUtc = DateTime.UtcNow
+        },
+        new Item
+        {
+            Title = "Mountain Bike",
+            Description = "Men's mountain bike, fully serviced.",
+            Category = "Sports",
+            Location = "Manchester",
+            DailyRate = 25.00m,
+            OwnerUserId = defaultUser.Id,
+            IsActive = true,
+            CreatedAtUtc = DateTime.UtcNow
+        },
+        new Item
+        {
+            Title = "Camping Tent",
+            Description = "4-person dome tent, waterproof.",
+            Category = "Outdoors",
+            Location = "Birmingham",
+            DailyRate = 15.00m,
+            OwnerUserId = defaultUser.Id,
+            IsActive = true,
+            CreatedAtUtc = DateTime.UtcNow
+        },
+        new Item
+        {
+            Title = "DJI Drone",
+            Description = "DJI Mini 3 Pro with 4K camera.",
+            Category = "Electronics",
+            Location = "Edinburgh",
+            DailyRate = 45.00m,
+            OwnerUserId = defaultUser.Id,
+            IsActive = true,
+            CreatedAtUtc = DateTime.UtcNow
+        }
+    };
+
+    db.Items.AddRange(items);
+    await db.SaveChangesAsync();
 }
 
 static class MiniValidator

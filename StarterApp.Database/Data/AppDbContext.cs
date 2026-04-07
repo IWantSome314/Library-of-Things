@@ -108,6 +108,7 @@ public class AppDbContext : DbContext
     public DbSet<UserRole> UserRoles { get; set; }
     public DbSet<RefreshToken> RefreshTokens { get; set; }
     public DbSet<Item> Items { get; set; }
+    public DbSet<RentalRequest> RentalRequests { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -158,6 +159,22 @@ public class AppDbContext : DbContext
             entity.HasOne(i => i.OwnerUser)
                   .WithMany(u => u.OwnedItems)
                   .HasForeignKey(i => i.OwnerUserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<RentalRequest>(entity =>
+        {
+            entity.HasIndex(r => r.ItemId);
+            entity.HasIndex(r => r.RequestorUserId);
+            
+            entity.HasOne(r => r.Item)
+                  .WithMany(i => i.RentalRequests)
+                  .HasForeignKey(r => r.ItemId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(r => r.RequestorUser)
+                  .WithMany(u => u.RentalRequests)
+                  .HasForeignKey(r => r.RequestorUserId)
                   .OnDelete(DeleteBehavior.Cascade);
         });
 

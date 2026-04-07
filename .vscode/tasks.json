@@ -1,0 +1,39 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Start API Backend",
+            "type": "shell",
+            "command": "dotnet run --project StarterApp.Api/StarterApp.Api.csproj",
+            "options": {
+                "env": {
+                    "ASPNETCORE_URLS": "http://0.0.0.0:8080"
+                }
+            },
+            "isBackground": true,
+            "runOptions": {
+                "runOn": "folderOpen"
+            },
+            "presentation": {
+                "reveal": "silent",
+                "panel": "shared",
+                "clear": true
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "ADB Reverse API Port",
+            "type": "shell",
+            "command": "sleep 2 && adb reverse tcp:8080 tcp:8080",
+            "windows": {
+                "command": "Start-Sleep -Seconds 2; if (Get-Command adb -ErrorAction SilentlyContinue) { adb reverse tcp:8080 tcp:8080 }"
+            },
+            "runOptions": {
+                "runOn": "folderOpen"
+            },
+            "presentation": {
+                "reveal": "silent"
+            }
+        }
+    ]
+}

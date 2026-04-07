@@ -23,19 +23,45 @@ public static class MauiProgram
 
         builder.Services.AddDbContext<AppDbContext>();
 
-        builder.Services.AddSingleton(sp =>
+        // Register the HTTP Interceptor that will automatically attach and refresh JWTs 
+        builder.Services.AddTransient<AuthenticationInterceptor>();
+
+        var apiBaseUrl = Environment.GetEnvironmentVariable("AUTH_API_BASE_URL") ?? "http://localhost:8080";
+
+        // AuthClient: Used specifically for Login/Register/Refresh operations. 
+        // This explicitly bypasses the interceptor to prevent infinite loop refresh attempts.
+        builder.Services.AddHttpClient("AuthClient", client =>
         {
-            var apiBaseUrl = Environment.GetEnvironmentVariable("AUTH_API_BASE_URL") ?? "http://localhost:8080";
-            var client = new HttpClient
-            {
-                BaseAddress = new Uri(apiBaseUrl)
-            };
+            client.BaseAddress = new Uri(apiBaseUrl);
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            return client;
         });
 
-        builder.Services.AddSingleton<IAuthenticationService, JWTAuthenticationService>();
-        builder.Services.AddSingleton<IItemApiService, ItemApiService>();
+        // ApiClient: Used for all standard domain data operations (e.g. Items, Users). 
+        // Automatically routes through AuthenticationInterceptor for JWT bearer attachment.
+        builder.Services.AddHttpClient("ApiClient", client =>
+        {
+            client.BaseAddress = new Uri(apiBaseUrl);
+            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        }).AddHttpMessageHandler<AuthenticationInterceptor>();
+
+        builder.Services.AddSingleton<IAuthenticationService>(sp => 
+        {
+            var factory = sp.GetRequiredService<IHttpClientFactory>();
+            return new JWTAuthenticationService(factory.CreateClient("AuthClient"));
+        });
+
+        builder.Services.AddSingleton<IItemApiService>(sp => 
+        {
+            var factory = sp.GetRequiredService<IHttpClientFactory>();
+            return new ItemApiService(factory.CreateClient("ApiClient"));
+        });
+        
+        builder.Services.AddSingleton<IRentalApiService>(sp => 
+        {
+            var factory = sp.GetRequiredService<IHttpClientFactory>();
+            return new RentalApiService(factory.CreateClient("ApiClient"));
+        });
+
         builder.Services.AddSingleton<INavigationService, NavigationService>();
 
         builder.Services.AddSingleton<AppShellViewModel>();
@@ -56,6 +82,10 @@ public static class MauiProgram
         builder.Services.AddTransient<ItemListPage>();
         builder.Services.AddTransient<ItemDetailViewModel>();
         builder.Services.AddTransient<ItemDetailPage>();
+        builder.Services.AddTransient<RentalListViewModel>();
+        builder.Services.AddTransient<RentalListPage>();
+        builder.Services.AddTransient<RentalRequestViewModel>();
+        builder.Services.AddTransient<RentalRequestPage>();
         builder.Services.AddSingleton<TempViewModel>();
         builder.Services.AddTransient<TempPage>();
 

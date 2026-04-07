@@ -117,8 +117,6 @@ public class JWTAuthenticationService : IAuthenticationService
         _tokenExpirationUtc = DateTime.MinValue;
         _currentUser = null;
         _currentUserRoles.Clear();
-        _httpClient.DefaultRequestHeaders.Authorization = null;
-
         SecureStorage.Default.Remove(AccessTokenStorageKey);
         SecureStorage.Default.Remove(RefreshTokenStorageKey);
         SecureStorage.Default.Remove(TokenExpiryStorageKey);
@@ -216,8 +214,19 @@ public class JWTAuthenticationService : IAuthenticationService
         }
 
         HydrateUserFromJwt(_accessToken);
-        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _accessToken);
         AuthenticationStateChanged?.Invoke(this, true);
+    }
+
+    /// <summary>
+    /// Exposes the active Access Token for the AuthenticationInterceptor.
+    /// Ensures the token is valid (automatically refreshing if necessary) before returning it.
+    /// </summary>
+    public async Task<string?> GetAccessTokenAsync()
+    {
+        await InitializeAsync();
+        
+        var isValid = await EnsureValidTokenAsync();
+        return isValid ? _accessToken : null;
     }
 
     public async Task<bool> EnsureValidTokenAsync()
@@ -299,8 +308,6 @@ public class JWTAuthenticationService : IAuthenticationService
         await SecureStorage.Default.SetAsync(AccessTokenStorageKey, _accessToken);
         await SecureStorage.Default.SetAsync(RefreshTokenStorageKey, _refreshToken);
         await SecureStorage.Default.SetAsync(TokenExpiryStorageKey, _tokenExpirationUtc.ToString("O"));
-
-        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _accessToken);
     }
 
     private void HydrateUserFromJwt(string accessToken)

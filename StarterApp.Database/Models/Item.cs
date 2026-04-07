@@ -37,5 +37,7 @@ public class Item
 
     public bool IsActive { get; set; } = true;
 
+    // Navigation properties
     public User OwnerUser { get; set; } = null!;
+    public List<RentalRequest> RentalRequests { get; set; } = new List<RentalRequest>();
 }

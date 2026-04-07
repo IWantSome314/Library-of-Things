@@ -13,7 +13,7 @@ public partial class ItemDetailViewModel : BaseViewModel
     private readonly IAuthenticationService _authService;
 
     [ObservableProperty]
-    private int itemId;
+    private int itemId = -1;
 
     [ObservableProperty]
     private string titleText = string.Empty;
@@ -31,12 +31,6 @@ public partial class ItemDetailViewModel : BaseViewModel
     private string dailyRateText = string.Empty;
 
     [ObservableProperty]
-    private string latitudeText = string.Empty;
-
-    [ObservableProperty]
-    private string longitudeText = string.Empty;
-
-    [ObservableProperty]
     private string ownerDisplay = string.Empty;
 
     [ObservableProperty]
@@ -44,6 +38,9 @@ public partial class ItemDetailViewModel : BaseViewModel
 
     [ObservableProperty]
     private bool canEdit;
+
+    [ObservableProperty]
+    private bool canRent;
 
     private ItemDetailDto? _loadedItem;
 
@@ -155,6 +152,18 @@ public partial class ItemDetailViewModel : BaseViewModel
         await _navigationService.NavigateToAsync("MainPage");
     }
 
+    [RelayCommand]
+    private async Task RequestToRentAsync()
+    {
+        if (ItemId <= 0) return;
+
+        await _navigationService.NavigateToAsync("RentalRequestPage", new Dictionary<string, object>
+        {
+            ["itemId"] = ItemId,
+            ["itemTitle"] = TitleText
+        });
+    }
+
     private async Task LoadAsync(int id)
     {
         if (IsBusy)
@@ -179,8 +188,6 @@ public partial class ItemDetailViewModel : BaseViewModel
                 Category = string.Empty;
                 Location = string.Empty;
                 DailyRateText = string.Empty;
-                LatitudeText = string.Empty;
-                LongitudeText = string.Empty;
                 _loadedItem = null;
                 return;
             }
@@ -201,10 +208,9 @@ public partial class ItemDetailViewModel : BaseViewModel
             Category = item.Category;
             Location = item.Location;
             DailyRateText = item.DailyRate.ToString("0.00", CultureInfo.InvariantCulture);
-            LatitudeText = item.Latitude?.ToString(CultureInfo.InvariantCulture) ?? string.Empty;
-            LongitudeText = item.Longitude?.ToString(CultureInfo.InvariantCulture) ?? string.Empty;
             OwnerDisplay = item.OwnerName;
             CanEdit = _authService.CurrentUser is not null && _authService.CurrentUser.Id == item.OwnerUserId;
+            CanRent = _authService.CurrentUser is not null && _authService.CurrentUser.Id != item.OwnerUserId && !IsNewItem;
         }
         catch (Exception ex)
         {
@@ -239,28 +245,6 @@ public partial class ItemDetailViewModel : BaseViewModel
         {
             SetError("Daily rate must be a number greater than 0 (use dot for decimals). ");
             return false;
-        }
-
-        if (!string.IsNullOrWhiteSpace(LatitudeText))
-        {
-            if (!double.TryParse(LatitudeText, NumberStyles.Float, CultureInfo.InvariantCulture, out var lat) || lat < -90 || lat > 90)
-            {
-                SetError("Latitude must be between -90 and 90.");
-                return false;
-            }
-
-            latitude = lat;
-        }
-
-        if (!string.IsNullOrWhiteSpace(LongitudeText))
-        {
-            if (!double.TryParse(LongitudeText, NumberStyles.Float, CultureInfo.InvariantCulture, out var lng) || lng < -180 || lng > 180)
-            {
-                SetError("Longitude must be between -180 and 180.");
-                return false;
-            }
-
-            longitude = lng;
         }
 
         return true;

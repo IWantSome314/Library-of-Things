@@ -17,8 +17,8 @@ public partial class App : Application
 		Routing.RegisterRoute(nameof(Views.UserDetailPage), typeof(Views.UserDetailPage));
 		Routing.RegisterRoute(nameof(Views.ItemListPage), typeof(Views.ItemListPage));
 		Routing.RegisterRoute(nameof(Views.ItemDetailPage), typeof(Views.ItemDetailPage));
-		Routing.RegisterRoute(nameof(Views.TempPage), typeof(Views.TempPage));
-
+                Routing.RegisterRoute(nameof(Views.RentalListPage), typeof(Views.RentalListPage));
+                Routing.RegisterRoute(nameof(Views.RentalRequestPage), typeof(Views.RentalRequestPage));
 		var authService = _serviceProvider.GetService(typeof(StarterApp.Services.IAuthenticationService)) as StarterApp.Services.IAuthenticationService;
 		if (authService != null)
 		{

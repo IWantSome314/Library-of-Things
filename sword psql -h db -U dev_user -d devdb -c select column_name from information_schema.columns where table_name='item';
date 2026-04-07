@@ -1,0 +1,21 @@
+                                         Table "public.item"
+    Column    |           Type           | Collation | Nullable |              Default               
+--------------+--------------------------+-----------+----------+------------------------------------
+ Id           | integer                  |           | not null | nextval('"item_Id_seq"'::regclass)
+ Title        | character varying(150)   |           | not null | 
+ Description  | character varying(2000)  |           | not null | 
+ DailyRate    | numeric(10,2)            |           | not null | 
+ Category     | character varying(100)   |           | not null | 
+ Location     | character varying(200)   |           | not null | 
+ Latitude     | double precision         |           |          | 
+ Longitude    | double precision         |           |          | 
+ OwnerUserId  | integer                  |           | not null | 
+ CreatedAtUtc | timestamp with time zone |           | not null | 
+ UpdatedAtUtc | timestamp with time zone |           | not null | 
+ IsActive     | boolean                  |           | not null | 
+Indexes:
+    "item_pkey" PRIMARY KEY, btree ("Id")
+    "IX_item_OwnerUserId" btree ("OwnerUserId")
+Foreign-key constraints:
+    "FK_item_users_OwnerUserId" FOREIGN KEY ("OwnerUserId") REFERENCES users("Id") ON DELETE CASCADE
+

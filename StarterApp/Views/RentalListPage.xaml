@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage x:Class="StarterApp.Views.RentalListPage"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:StarterApp.ViewModels"
+             xmlns:models="clr-namespace:StarterApp.Services"
+             x:DataType="viewmodels:RentalListViewModel"
+             Title="{Binding Title}">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Home" Command="{Binding NavigateToDashboardCommand}" />
+    </ContentPage.ToolbarItems>
+
+    <Grid RowDefinitions="Auto,*">
+        <HorizontalStackLayout Grid.Row="0" Spacing="10" Padding="10" HorizontalOptions="Center">
+            <Button Text="Incoming" 
+                    Command="{Binding ToggleViewCommand}" 
+                    CommandParameter="incoming">
+                <Button.Triggers>
+                    <DataTrigger TargetType="Button" Binding="{Binding ShowIncoming}" Value="True">
+                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+                    </DataTrigger>
+                    <DataTrigger TargetType="Button" Binding="{Binding ShowIncoming}" Value="False">
+                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray600}}" />
+                    </DataTrigger>
+                </Button.Triggers>
+            </Button>
+            <Button Text="Outgoing" 
+                    Command="{Binding ToggleViewCommand}" 
+                    CommandParameter="outgoing">
+                <Button.Triggers>
+                    <DataTrigger TargetType="Button" Binding="{Binding ShowOutgoing}" Value="True">
+                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+                    </DataTrigger>
+                    <DataTrigger TargetType="Button" Binding="{Binding ShowOutgoing}" Value="False">
+                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray600}}" />
+                    </DataTrigger>
+                </Button.Triggers>
+            </Button>
+        </HorizontalStackLayout>
+
+        <RefreshView Grid.Row="1" IsRefreshing="{Binding IsBusy}" Command="{Binding RefreshCommand}">
+            <Grid>
+                <!-- Incoming Requests -->
+                <CollectionView ItemsSource="{Binding IncomingRequests}" IsVisible="{Binding ShowIncoming}" Margin="10">
+                    <CollectionView.EmptyView>
+                        <Label Text="No incoming requests" HorizontalOptions="Center" VerticalOptions="Center" />
+                    </CollectionView.EmptyView>
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="models:RentalRequestSummaryDto">
+                            <Frame Padding="10" Margin="0,0,0,10" CornerRadius="8">
+                                <VerticalStackLayout Spacing="5">
+                                    <Label Text="{Binding ItemTitle}" FontAttributes="Bold" FontSize="16" />
+                                    <Label Text="{Binding RequestorName, StringFormat='From: {0}'}" />
+                                    <Label Text="{Binding StartDate, StringFormat='Start: {0:MMM dd, yyyy}'}" />
+                                    <Label Text="{Binding EndDate, StringFormat='End: {0:MMM dd, yyyy}'}" />
+                                    <Label Text="{Binding TotalPrice, StringFormat='Total: ${0:F2}'}" />
+                                    <Label Text="{Binding Status, StringFormat='Status: {0}'}" FontAttributes="Bold" />
+                                </VerticalStackLayout>
+                            </Frame>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+                <!-- Outgoing Requests -->
+                <CollectionView ItemsSource="{Binding OutgoingRequests}" IsVisible="{Binding ShowOutgoing}" Margin="10">
+                    <CollectionView.EmptyView>
+                        <Label Text="No outgoing requests" HorizontalOptions="Center" VerticalOptions="Center" />
+                    </CollectionView.EmptyView>
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="models:RentalRequestSummaryDto">
+                            <Frame Padding="10" Margin="0,0,0,10" CornerRadius="8">
+                                <VerticalStackLayout Spacing="5">
+                                    <Label Text="{Binding ItemTitle}" FontAttributes="Bold" FontSize="16" />
+                                    <Label Text="{Binding OwnerName, StringFormat='To: {0}'}" />
+                                    <Label Text="{Binding StartDate, StringFormat='Start: {0:MMM dd, yyyy}'}" />
+                                    <Label Text="{Binding EndDate, StringFormat='End: {0:MMM dd, yyyy}'}" />
+                                    <Label Text="{Binding TotalPrice, StringFormat='Total: ${0:F2}'}" />
+                                    <Label Text="{Binding Status, StringFormat='Status: {0}'}" FontAttributes="Bold" />
+                                </VerticalStackLayout>
+                            </Frame>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </Grid>
+        </RefreshView>
+    </Grid>
+</ContentPage>

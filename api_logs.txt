@@ -268,3 +268,58 @@ info: Microsoft.EntityFrameworkCore.Database.Command[20101]
       INSERT INTO refresh_token ("CreatedAtUtc", "ExpiresAtUtc", "IsRevoked", "RevokedAtUtc", "TokenHash", "UserId")
       VALUES (@p0, @p1, @p2, @p3, @p4, @p5)
       RETURNING "Id";
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (14ms) [Parameters=[@__refreshHash_0='?'], CommandType='Text', CommandTimeout='30']
+      SELECT r."Id", r."CreatedAtUtc", r."ExpiresAtUtc", r."IsRevoked", r."RevokedAtUtc", r."TokenHash", r."UserId"
+      FROM refresh_token AS r
+      WHERE r."TokenHash" = @__refreshHash_0
+      LIMIT 1
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (19ms) [Parameters=[@__storedToken_UserId_0='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
+      SELECT u1."Id", u1."CreatedAt", u1."DeletedAt", u1."Email", u1."FirstName", u1."IsActive", u1."LastName", u1."PasswordHash", u1."PasswordSalt", u1."UpdatedAt", s."Id", s."CreatedAt", s."DeletedAt", s."IsActive", s."RoleId", s."UpdatedAt", s."UserId", s."Id0", s."Description", s."IsDefault", s."Name"
+      FROM (
+          SELECT u."Id", u."CreatedAt", u."DeletedAt", u."Email", u."FirstName", u."IsActive", u."LastName", u."PasswordHash", u."PasswordSalt", u."UpdatedAt"
+          FROM users AS u
+          WHERE u."Id" = @__storedToken_UserId_0 AND u."IsActive"
+          LIMIT 1
+      ) AS u1
+      LEFT JOIN (
+          SELECT u0."Id", u0."CreatedAt", u0."DeletedAt", u0."IsActive", u0."RoleId", u0."UpdatedAt", u0."UserId", r."Id" AS "Id0", r."Description", r."IsDefault", r."Name"
+          FROM user_role AS u0
+          INNER JOIN role AS r ON u0."RoleId" = r."Id"
+      ) AS s ON u1."Id" = s."UserId"
+      ORDER BY u1."Id", s."Id"
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (21ms) [Parameters=[@p2='?' (DbType = Int32), @p0='?' (DbType = Boolean), @p1='?' (DbType = DateTime), @p3='?' (DbType = DateTime), @p4='?' (DbType = DateTime), @p5='?' (DbType = Boolean), @p6='?' (DbType = DateTime), @p7='?', @p8='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
+      UPDATE refresh_token SET "IsRevoked" = @p0, "RevokedAtUtc" = @p1
+      WHERE "Id" = @p2;
+      INSERT INTO refresh_token ("CreatedAtUtc", "ExpiresAtUtc", "IsRevoked", "RevokedAtUtc", "TokenHash", "UserId")
+      VALUES (@p3, @p4, @p5, @p6, @p7, @p8)
+      RETURNING "Id";
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[@__request_Email_0='?'], CommandType='Text', CommandTimeout='30']
+      SELECT u1."Id", u1."CreatedAt", u1."DeletedAt", u1."Email", u1."FirstName", u1."IsActive", u1."LastName", u1."PasswordHash", u1."PasswordSalt", u1."UpdatedAt", s."Id", s."CreatedAt", s."DeletedAt", s."IsActive", s."RoleId", s."UpdatedAt", s."UserId", s."Id0", s."Description", s."IsDefault", s."Name"
+      FROM (
+          SELECT u."Id", u."CreatedAt", u."DeletedAt", u."Email", u."FirstName", u."IsActive", u."LastName", u."PasswordHash", u."PasswordSalt", u."UpdatedAt"
+          FROM users AS u
+          WHERE u."Email" = @__request_Email_0 AND u."IsActive"
+          LIMIT 1
+      ) AS u1
+      LEFT JOIN (
+          SELECT u0."Id", u0."CreatedAt", u0."DeletedAt", u0."IsActive", u0."RoleId", u0."UpdatedAt", u0."UserId", r."Id" AS "Id0", r."Description", r."IsDefault", r."Name"
+          FROM user_role AS u0
+          INNER JOIN role AS r ON u0."RoleId" = r."Id"
+      ) AS s ON u1."Id" = s."UserId"
+      ORDER BY u1."Id", s."Id"
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (5ms) [Parameters=[@p0='?' (DbType = DateTime), @p1='?' (DbType = DateTime), @p2='?' (DbType = Boolean), @p3='?' (DbType = DateTime), @p4='?', @p5='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
+      INSERT INTO refresh_token ("CreatedAtUtc", "ExpiresAtUtc", "IsRevoked", "RevokedAtUtc", "TokenHash", "UserId")
+      VALUES (@p0, @p1, @p2, @p3, @p4, @p5)
+      RETURNING "Id";
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (10ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT i."Id", i."Title", i."Category", i."DailyRate", i."Location", i."Latitude", i."Longitude", i."OwnerUserId", u."Id", u."CreatedAt", u."DeletedAt", u."Email", u."FirstName", u."IsActive", u."LastName", u."PasswordHash", u."PasswordSalt", u."UpdatedAt"
+      FROM item AS i
+      INNER JOIN users AS u ON i."OwnerUserId" = u."Id"
+      WHERE i."IsActive"
+      ORDER BY i."CreatedAtUtc" DESC

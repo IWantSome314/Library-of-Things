@@ -28,6 +28,7 @@ public class User
     public List<UserRole> UserRoles { get; set; } = new List<UserRole>();
     public List<Item> OwnedItems { get; set; } = new List<Item>();
     public List<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
+    public List<RentalRequest> RentalRequests { get; set; } = new List<RentalRequest>();
     
     [NotMapped]
     public string FullName => $"{FirstName} {LastName}";

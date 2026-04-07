@@ -434,3 +434,17 @@ Use these if asked technical questions in demo:
 - **Database Migration Desync Resolved:** Addressed an issue where EF Core believed the database was fully up to date, but the `refresh_token` and `item` tables were missing. This caused the API to hard crash (HTTP 500) during token generation and saving after successful password validation. Manually reconstructed the tables in Postgres matching the orphaned Entity Framework mappings.
 - **Port Matching \& ADB Reverse Routing Setup:** Confirmed the API required running on a port visible to the Android Emulator. Used `ASPNETCORE_URLS="http://0.0.0.0:8080"` and `adb reverse tcp:8080 tcp:8080` to solve the "unable to reach auth server" `HttpRequestException` in MAUI.
 - **Removed Orphaned Migrations:** Addressed an issue where `.cs` migration files were tracked but their associated `.Designer.cs` metadata files were missing, which caused .NET Core to silently completely ignore pending migrations.
+
+- **MAUI Dark Mode UI Crash Fixed:** Added missing `Gray700` and `Gray800` static color definitions and brushes to `StarterApp/Resources/Styles/Colors.xaml` which prevented an immediate app crash upon successful logical login and redirection to the MainPage. 
+- **Automated Startup Integration:** Implemented VS Code tasks (`.vscode/tasks.json` with `runOn: folderOpen`) and Dev Container lifecycle hooks (`postStartCommand` in `.devcontainer.json`) to automatically execute the local `.NET API` bind and `adb reverse` network bridge. This ensures database connectivity seamlessly survives cold boots.
+
+- **Robust Token Auto-Refresh Lifecycle:** Created an `AuthenticationInterceptor` (`DelegatingHandler`) and swapped the monolithic Singleton `HttpClient` over to `IHttpClientFactory` implementations (`AuthClient`, `ApiClient`).
+    - **Proactive Refresh:** Automatically intercepts all outbound requests and evaluates token expiry, refreshing before the request ever reaches the server.
+    - **Reactive Refresh:** Catches unexpected `401 Unauthorized` responses and fires `ForceRefreshTokenAsync()`, replacing the token and cleanly resubmitting the original HTTP request once under the hood, completely transparent to the user.
+    - **Clean Dependency Injection:** Factored token logic out of standard data services (`ItemApiService`), allowing them to focus entirely on domain logic rather than manual token validation.
+
+## Fixes on April 7, 2026
+
+- **ADB Proxy Resiliency:** Updated `adb-proxy.py` to target multiple fallback IP addresses for `host.docker.internal` and provide clearer diagnostic error messages when the remote daemon refuses the connection.
+- **Android Theme Crash Fixed:** Resolved a fatal `IllegalArgumentException` on Android app launch ("This component requires that you specify a valid TextAppearance attribute") by creating the missing `StarterApp/Platforms/Android/Resources/values/styles.xml`. Explicitly configured `Maui.SplashTheme` and `Maui.MainTheme.NoActionBar` to inherit from `Theme.MaterialComponents` as requested by the MAUI Android platform interop.
+- **API Port Forwarding:** Reinvoked the `adb reverse tcp:8080 tcp:8080` tunnel to allow the Android emulator loopback adapter to successfully reach the running host `.NET API` at `http://localhost:8080`.

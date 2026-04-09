@@ -26,9 +26,11 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"  # maps host to container
     environment:
-      ADB_SERVER_SOCKET: tcp:host.docker.internal:5037  # make sure container sees host ADB
+      ADB_SERVER_SOCKET: tcp:127.0.0.1:5037
       CONNECTION_STRING: Host=db;Port=5432;Username=dev_user;Password=dev_password;Database=devdb
     depends_on:
+      api:
+        condition: service_started
       db:
         condition: service_healthy
 

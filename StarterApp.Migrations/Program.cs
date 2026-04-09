@@ -3,5 +3,6 @@ using StarterApp.Database.Data;
 
 Console.WriteLine("Running migrations...");
 using var context = new AppDbContext();
-context.Database.Migrate();
+await LegacySchemaRepair.NormalizeAsync(context);
+await context.Database.MigrateAsync();
 Console.WriteLine("Migrations complete.");

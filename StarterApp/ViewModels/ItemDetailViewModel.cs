@@ -2,15 +2,32 @@ using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using StarterApp.Services;
+using System.Collections.ObjectModel;
 
 namespace StarterApp.ViewModels;
 
 [QueryProperty(nameof(ItemId), "itemId")]
 public partial class ItemDetailViewModel : BaseViewModel
 {
+    private static readonly string[] DefaultCategories =
+    {
+        "Tools",
+        "Garden",
+        "Home",
+        "Electronics",
+        "Photography",
+        "Sports",
+        "Outdoors",
+        "Events",
+        "DIY",
+        "Cleaning"
+    };
+
     private readonly IItemApiService _itemApiService;
     private readonly INavigationService _navigationService;
     private readonly IAuthenticationService _authService;
+
+    public ObservableCollection<string> AvailableCategories { get; } = new(DefaultCategories);
 
     [ObservableProperty]
     private int itemId = -1;
@@ -175,11 +192,11 @@ public partial class ItemDetailViewModel : BaseViewModel
         {
             IsBusy = true;
             ClearError();
+            await _authService.InitializeAsync();
 
             if (id <= 0)
             {
                 IsNewItem = true;
-                await _authService.InitializeAsync();
                 CanEdit = _authService.IsAuthenticated;
                 OwnerDisplay = _authService.CurrentUser?.FullName ?? "Unknown";
                 Title = "Create Item";
@@ -205,6 +222,7 @@ public partial class ItemDetailViewModel : BaseViewModel
             Title = "Item Details";
             TitleText = item.Title;
             DescriptionText = item.Description;
+            EnsureCategoryOption(item.Category);
             Category = item.Category;
             Location = item.Location;
             DailyRateText = item.DailyRate.ToString("0.00", CultureInfo.InvariantCulture);
@@ -248,5 +266,18 @@ public partial class ItemDetailViewModel : BaseViewModel
         }
 
         return true;
+    }
+
+    private void EnsureCategoryOption(string categoryName)
+    {
+        if (string.IsNullOrWhiteSpace(categoryName))
+        {
+            return;
+        }
+
+        if (!AvailableCategories.Contains(categoryName))
+        {
+            AvailableCategories.Add(categoryName);
+        }
     }
 }

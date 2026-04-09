@@ -36,21 +36,25 @@
                 <Border Grid.Row="0"
                         BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
                         Padding="20"
-                        HeightRequest="120">
+                    MinimumHeightRequest="132">
                     <Border.StrokeShape>
                         <RoundRectangle CornerRadius="12" />
                     </Border.StrokeShape>
                     <StackLayout VerticalOptions="Center">
                         <Label Text="{Binding WelcomeMessage}"
-                               FontSize="24"
+                               FontSize="20"
                                FontAttributes="Bold"
                                TextColor="White"
-                               HorizontalOptions="Center" />
-                        <Label Text="{Binding CurrentUser.Email}"
-                               FontSize="14"
+                               HorizontalOptions="Center"
+                               HorizontalTextAlignment="Center"
+                               LineBreakMode="WordWrap" />
+                        <Label Text="{Binding DashboardDescription}"
+                               FontSize="13"
                                TextColor="White"
                                Opacity="0.8"
-                               HorizontalOptions="Center" />
+                               HorizontalOptions="Center"
+                               HorizontalTextAlignment="Center"
+                               LineBreakMode="WordWrap" />
                     </StackLayout>
                 </Border>
 
@@ -157,7 +161,7 @@
                         </Grid>
                     </Border>
 
-                    <!-- Items Card -->
+                        <!-- Active Listings Card -->
                     <Border BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray900}}"
                             Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"
                             StrokeThickness="1"
@@ -175,10 +179,10 @@
                                    FontSize="24"
                                    VerticalOptions="Center" />
                             <StackLayout Grid.Column="1" Margin="15,0,0,0" VerticalOptions="Center">
-                                <Label Text="Items"
+                                    <Label Text="Browse Items"
                                        FontSize="16"
                                        FontAttributes="Bold" />
-                                <Label Text="Create, browse and manage listings"
+                                    <Label Text="See active listings"
                                        FontSize="12"
                                        TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}" />
                             </StackLayout>
@@ -190,7 +194,7 @@
                         </Grid>
                     </Border>
                     
-                    <!-- Rentals Card -->
+                        <!-- My Rentals Card -->
                     <Border BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray900}}"
                             Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"
                             StrokeThickness="1"
@@ -208,10 +212,10 @@
                                    FontSize="24"
                                    VerticalOptions="Center" />
                             <StackLayout Grid.Column="1" Margin="15,0,0,0" VerticalOptions="Center">
-                                <Label Text="Rental Requests"
+                                    <Label Text="My Rentals"
                                        FontSize="16"
                                        FontAttributes="Bold" />
-                                <Label Text="View incoming and outgoing rentals"
+                                                <Label Text="View listings and requests"
                                        FontSize="12"
                                        TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}" />
                             </StackLayout>
@@ -239,7 +243,7 @@
                         <Grid ColumnDefinitions="Auto,*,Auto">
                             <Label Grid.Column="0"
                                    Text="🔐"
-                                   FontSize="24"
+                                   FontSize="12"
                                    VerticalOptions="Center" />
                             <StackLayout Grid.Column="1" Margin="15,0,0,0" VerticalOptions="Center">
                                 <Label Text="User management"

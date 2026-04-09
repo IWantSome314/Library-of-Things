@@ -23,7 +23,10 @@
             <Editor Text="{Binding DescriptionText}" AutoSize="TextChanges" IsEnabled="{Binding CanEdit}" />
 
             <Label Text="Category" FontAttributes="Bold" />
-            <Entry Text="{Binding Category}" IsEnabled="{Binding CanEdit}" />
+                <Picker ItemsSource="{Binding AvailableCategories}"
+                    SelectedItem="{Binding Category}"
+                    Title="Select category"
+                    IsEnabled="{Binding CanEdit}" />
 
             <Label Text="Daily Rate" FontAttributes="Bold" />
             <Entry Text="{Binding DailyRateText}" Keyboard="Numeric" IsEnabled="{Binding CanEdit}" />

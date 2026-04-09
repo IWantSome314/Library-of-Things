@@ -8,6 +8,7 @@ public partial class ItemListViewModel : BaseViewModel
 {
     private readonly IItemApiService _itemApiService;
     private readonly INavigationService _navigationService;
+    private readonly IAuthenticationService _authService;
 
     private List<ItemSummaryDto> _allItems = new();
 
@@ -17,10 +18,17 @@ public partial class ItemListViewModel : BaseViewModel
     [ObservableProperty]
     private string searchText = string.Empty;
 
-    public ItemListViewModel(IItemApiService itemApiService, INavigationService navigationService)
+    [ObservableProperty]
+    private bool showingBrowseListings = true;
+
+    [ObservableProperty]
+    private bool showingMyListings;
+
+    public ItemListViewModel(IItemApiService itemApiService, INavigationService navigationService, IAuthenticationService authService)
     {
         _itemApiService = itemApiService;
         _navigationService = navigationService;
+        _authService = authService;
         Title = "Items";
     }
 
@@ -31,6 +39,22 @@ public partial class ItemListViewModel : BaseViewModel
 
     partial void OnSearchTextChanged(string value)
     {
+        ApplyFilters();
+    }
+
+    [RelayCommand]
+    private void ShowBrowseListings()
+    {
+        ShowingBrowseListings = true;
+        ShowingMyListings = false;
+        ApplyFilters();
+    }
+
+    [RelayCommand]
+    private void ShowMyListings()
+    {
+        ShowingBrowseListings = false;
+        ShowingMyListings = true;
         ApplyFilters();
     }
 
@@ -64,6 +88,21 @@ public partial class ItemListViewModel : BaseViewModel
     }
 
     [RelayCommand]
+    private async Task RequestItemAsync(ItemListRow? row)
+    {
+        if (row is null || !row.CanRequest)
+        {
+            return;
+        }
+
+        await _navigationService.NavigateToAsync("RentalRequestPage", new Dictionary<string, object>
+        {
+            ["itemId"] = row.Id,
+            ["itemTitle"] = row.Title
+        });
+    }
+
+    [RelayCommand]
     private async Task NavigateToDashboardAsync()
     {
         await _navigationService.NavigateToAsync("MainPage");
@@ -81,6 +120,8 @@ public partial class ItemListViewModel : BaseViewModel
             IsBusy = true;
             ClearError();
 
+            await _authService.InitializeAsync();
+
             _allItems = await _itemApiService.GetItemsAsync();
             ApplyFilters();
         }
@@ -97,6 +138,14 @@ public partial class ItemListViewModel : BaseViewModel
     private void ApplyFilters()
     {
         var filtered = _allItems.AsEnumerable();
+        var currentUserId = _authService.CurrentUser?.Id;
+
+        if (currentUserId is not null)
+        {
+            filtered = ShowingMyListings
+                ? filtered.Where(i => i.OwnerUserId == currentUserId.Value)
+                : filtered.Where(i => i.OwnerUserId != currentUserId.Value);
+        }
 
         if (!string.IsNullOrWhiteSpace(SearchText))
         {
@@ -115,7 +164,8 @@ public partial class ItemListViewModel : BaseViewModel
                 Category = i.Category,
                 DailyRate = i.DailyRate,
                 Location = i.Location,
-                OwnerName = i.OwnerName
+                OwnerName = i.OwnerName,
+                CanRequest = currentUserId is not null && i.OwnerUserId != currentUserId.Value
             })
             .ToList();
     }
@@ -129,4 +179,5 @@ public sealed class ItemListRow
     public decimal DailyRate { get; set; }
     public string Location { get; set; } = string.Empty;
     public string OwnerName { get; set; } = string.Empty;
+    public bool CanRequest { get; set; }
 }

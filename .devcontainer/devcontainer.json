@@ -2,6 +2,7 @@
     "name": "MAUI Dev Environment",
     "dockerComposeFile": ["../docker-compose.yml"],
     "service": "app",
+    "runServices": ["app", "api", "db"],
     "workspaceFolder": "/workspace",
     "customizations": {
         "vscode": {
@@ -13,7 +14,7 @@
         }
     },
     "remoteUser": "root",
-    "postStartCommand": "adb reverse tcp:8080 tcp:8080 || true",
+    "postStartCommand": "bash -lc 'pgrep -f \"python3 /workspace/adb-proxy.py\" >/dev/null || (nohup python3 /workspace/adb-proxy.py >/tmp/adb-proxy.log 2>&1 &); adb reverse tcp:8080 tcp:8080 || true'",
     "portsAttributes": {
         "5037": { "onAutoForward": "ignore" },
         "5554": { "onAutoForward": "silent" },

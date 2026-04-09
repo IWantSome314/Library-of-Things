@@ -373,6 +373,140 @@ app.MapPut("/items/{id:int}", async (int id, ClaimsPrincipal principal, AppDbCon
     return Results.Ok(new { message = "Item updated." });
 }).RequireAuthorization();
 
+app.MapPost("/rentals", async (ClaimsPrincipal principal, AppDbContext db, CreateRentalRequestDto request) =>
+{
+    if (!MiniValidator.TryValidate(request, out var errors))
+    {
+        return Results.ValidationProblem(errors);
+    }
+
+    var userId = GetUserId(principal);
+    if (userId is null)
+    {
+        return Results.Unauthorized();
+    }
+
+    if (request.StartDate.Date >= request.EndDate.Date)
+    {
+        return Results.BadRequest(new { message = "End date must be after start date." });
+    }
+
+    var item = await db.Items
+        .Include(i => i.OwnerUser)
+        .FirstOrDefaultAsync(i => i.Id == request.ItemId && i.IsActive);
+
+    if (item is null)
+    {
+        return Results.NotFound(new { message = "Item not found." });
+    }
+
+    if (item.OwnerUserId == userId.Value)
+    {
+        return Results.BadRequest(new { message = "You cannot request your own item." });
+    }
+
+    var totalDays = (request.EndDate.Date - request.StartDate.Date).Days;
+    var startDateUtc = DateTime.SpecifyKind(request.StartDate.Date, DateTimeKind.Utc);
+    var endDateUtc = DateTime.SpecifyKind(request.EndDate.Date, DateTimeKind.Utc);
+    var rental = new RentalRequest
+    {
+        ItemId = item.Id,
+        RequestorUserId = userId.Value,
+        StartDate = startDateUtc,
+        EndDate = endDateUtc,
+        Status = "Pending",
+        Message = request.Message.Trim(),
+        TotalPrice = item.DailyRate * totalDays,
+        CreatedAtUtc = DateTime.UtcNow,
+        UpdatedAtUtc = DateTime.UtcNow
+    };
+
+    db.RentalRequests.Add(rental);
+    await db.SaveChangesAsync();
+
+    return Results.Created($"/rentals/{rental.Id}", new { rental.Id });
+}).RequireAuthorization();
+
+app.MapGet("/rentals/incoming", async (ClaimsPrincipal principal, AppDbContext db) =>
+{
+    var userId = GetUserId(principal);
+    if (userId is null)
+    {
+        return Results.Unauthorized();
+    }
+
+    var rentals = await db.RentalRequests
+        .Include(r => r.Item)
+            .ThenInclude(i => i.OwnerUser)
+        .Include(r => r.RequestorUser)
+        .Where(r => r.Item.OwnerUserId == userId.Value)
+        .OrderByDescending(r => r.CreatedAtUtc)
+        .Select(r => new RentalRequestSummaryResponse
+        {
+            Id = r.Id,
+            ItemId = r.ItemId,
+            ItemTitle = r.Item.Title,
+            RequestorUserId = r.RequestorUserId,
+            RequestorName = r.RequestorUser.FullName,
+            OwnerUserId = r.Item.OwnerUserId,
+            OwnerName = r.Item.OwnerUser.FullName,
+            StartDate = r.StartDate,
+            EndDate = r.EndDate,
+            Status = r.Status,
+            TotalPrice = r.TotalPrice,
+            Message = r.Message,
+            CreatedAtUtc = r.CreatedAtUtc
+        })
+        .ToListAsync();
+
+    return Results.Ok(rentals);
+}).RequireAuthorization();
+
+app.MapGet("/rentals/outgoing", async (ClaimsPrincipal principal, AppDbContext db) =>
+{
+    var userId = GetUserId(principal);
+    if (userId is null)
+    {
+        return Results.Unauthorized();
+    }
+
+    var rentals = await db.RentalRequests
+        .Include(r => r.Item)
+            .ThenInclude(i => i.OwnerUser)
+        .Include(r => r.RequestorUser)
+        .Where(r => r.RequestorUserId == userId.Value)
+        .OrderByDescending(r => r.CreatedAtUtc)
+        .Select(r => new RentalRequestSummaryResponse
+        {
+            Id = r.Id,
+            ItemId = r.ItemId,
+            ItemTitle = r.Item.Title,
+            RequestorUserId = r.RequestorUserId,
+            RequestorName = r.RequestorUser.FullName,
+            OwnerUserId = r.Item.OwnerUserId,
+            OwnerName = r.Item.OwnerUser.FullName,
+            StartDate = r.StartDate,
+            EndDate = r.EndDate,
+            Status = r.Status,
+            TotalPrice = r.TotalPrice,
+            Message = r.Message,
+            CreatedAtUtc = r.CreatedAtUtc
+        })
+        .ToListAsync();
+
+    return Results.Ok(rentals);
+}).RequireAuthorization();
+
+app.MapPost("/rentals/{id:int}/approve", async (int id, ClaimsPrincipal principal, AppDbContext db) =>
+{
+    return await UpdateRentalRequestStatusAsync(id, principal, db, "Approved");
+}).RequireAuthorization();
+
+app.MapPost("/rentals/{id:int}/deny", async (int id, ClaimsPrincipal principal, AppDbContext db) =>
+{
+    return await UpdateRentalRequestStatusAsync(id, principal, db, "Denied");
+}).RequireAuthorization();
+
 app.Run();
 
 static int? GetUserId(ClaimsPrincipal principal)
@@ -404,6 +538,49 @@ static async Task SaveRefreshTokenAsync(
     await db.SaveChangesAsync();
 }
 
+static async Task<IResult> UpdateRentalRequestStatusAsync(
+    int rentalRequestId,
+    ClaimsPrincipal principal,
+    AppDbContext db,
+    string nextStatus)
+{
+    var userId = GetUserId(principal);
+    if (userId is null)
+    {
+        return Results.Unauthorized();
+    }
+
+    var rental = await db.RentalRequests
+        .Include(r => r.Item)
+        .FirstOrDefaultAsync(r => r.Id == rentalRequestId);
+
+    if (rental is null)
+    {
+        return Results.NotFound(new { message = "Rental request not found." });
+    }
+
+    if (rental.Item.OwnerUserId != userId.Value)
+    {
+        return Results.Forbid();
+    }
+
+    if (!string.Equals(rental.Status, "Pending", StringComparison.OrdinalIgnoreCase))
+    {
+        return Results.BadRequest(new { message = "Only pending requests can be updated." });
+    }
+
+    rental.Status = nextStatus;
+    rental.UpdatedAtUtc = DateTime.UtcNow;
+    await db.SaveChangesAsync();
+
+    return Results.Ok(new RentalStatusChangeResponse
+    {
+        Id = rental.Id,
+        Status = rental.Status,
+        UpdatedAtUtc = rental.UpdatedAtUtc
+    });
+}
+
 static async Task EnsureDefaultRolesAsync(AppDbContext db)
 {
     if (await db.Roles.AnyAsync())
@@ -431,6 +608,7 @@ static async Task ApplyMigrationsWithRecoveryAsync(AppDbContext db)
     {
         try
         {
+            await LegacySchemaRepair.NormalizeAsync(db);
             await db.Database.MigrateAsync();
             return;
         }
@@ -439,23 +617,11 @@ static async Task ApplyMigrationsWithRecoveryAsync(AppDbContext db)
             await Task.Delay(delay);
             continue;
         }
-        catch (PostgresException ex) when (ex.SqlState == "42P07")
+        catch (PostgresException ex) when ((ex.SqlState == "42P07" || ex.SqlState == "42P01") && attempt < maxAttempts)
         {
-            // Legacy bootstrap recovery: schema exists but migrations history is missing.
-            await db.Database.ExecuteSqlRawAsync(@"
-CREATE TABLE IF NOT EXISTS ""__EFMigrationsHistory"" (
-    ""MigrationId"" character varying(150) NOT NULL,
-    ""ProductVersion"" character varying(32) NOT NULL,
-    CONSTRAINT ""PK___EFMigrationsHistory"" PRIMARY KEY (""MigrationId"")
-);");
-
-            await db.Database.ExecuteSqlRawAsync(@"
-INSERT INTO ""__EFMigrationsHistory"" (""MigrationId"", ""ProductVersion"")
-VALUES ('20260210141124_InitialCreate', '9.0.6')
-ON CONFLICT (""MigrationId"") DO NOTHING;");
-
-            await db.Database.MigrateAsync();
-            return;
+            await LegacySchemaRepair.NormalizeAsync(db);
+            await Task.Delay(delay);
+            continue;
         }
     }
 
@@ -464,29 +630,14 @@ ON CONFLICT (""MigrationId"") DO NOTHING;");
 
 static async Task EnsureMockDataAsync(AppDbContext db)
 {
-    if (await db.Items.AnyAsync())
-    {
-        return;
-    }
+    var mainOwner = await EnsureTestUserAsync(db, "James", "Owner", "james@email.com", "Password123!");
+    var secondaryOwner = await EnsureTestUserAsync(db, "John", "Owner", "john@email.com", "Password123!");
+    var thirdOwner = await EnsureTestUserAsync(db, "Ross", "Owner", "ross@email.com", "Password123!");
+    await EnsureTestUserAsync(db, "Requestor", "Latest", "requestor.latest.check@example.com", "Password123!");
 
-    var defaultUser = await db.Users.FirstOrDefaultAsync();
-    if (defaultUser == null)
-    {
-        var salt = BCrypt.Net.BCrypt.GenerateSalt();
-        defaultUser = new User
-        {
-            FirstName = "Alice",
-            LastName = "Mock",
-            Email = "mock@example.com",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("Password123!", salt),
-            PasswordSalt = salt,
-            IsActive = true,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
-        db.Users.Add(defaultUser);
-        await db.SaveChangesAsync();
-    }
+    var existingTitles = await db.Items
+        .Select(item => item.Title)
+        .ToListAsync();
 
     var items = new[]
     {
@@ -497,7 +648,7 @@ static async Task EnsureMockDataAsync(AppDbContext db)
             Category = "Tools",
             Location = "London",
             DailyRate = 12.50m,
-            OwnerUserId = defaultUser.Id,
+            OwnerUserId = mainOwner.Id,
             IsActive = true,
             CreatedAtUtc = DateTime.UtcNow
         },
@@ -508,7 +659,7 @@ static async Task EnsureMockDataAsync(AppDbContext db)
             Category = "Sports",
             Location = "Manchester",
             DailyRate = 25.00m,
-            OwnerUserId = defaultUser.Id,
+            OwnerUserId = mainOwner.Id,
             IsActive = true,
             CreatedAtUtc = DateTime.UtcNow
         },
@@ -519,7 +670,7 @@ static async Task EnsureMockDataAsync(AppDbContext db)
             Category = "Outdoors",
             Location = "Birmingham",
             DailyRate = 15.00m,
-            OwnerUserId = defaultUser.Id,
+            OwnerUserId = mainOwner.Id,
             IsActive = true,
             CreatedAtUtc = DateTime.UtcNow
         },
@@ -530,14 +681,160 @@ static async Task EnsureMockDataAsync(AppDbContext db)
             Category = "Electronics",
             Location = "Edinburgh",
             DailyRate = 45.00m,
-            OwnerUserId = defaultUser.Id,
+            OwnerUserId = mainOwner.Id,
+            IsActive = true,
+            CreatedAtUtc = DateTime.UtcNow
+        },
+        new Item
+        {
+            Title = "Pressure Washer",
+            Description = "High-pressure washer for patios, cars and driveways.",
+            Category = "Garden",
+            Location = "Leeds",
+            DailyRate = 16.00m,
+            OwnerUserId = mainOwner.Id,
+            IsActive = true,
+            CreatedAtUtc = DateTime.UtcNow
+        },
+        new Item
+        {
+            Title = "Folding Tables Set",
+            Description = "Set of 3 folding tables for events and markets.",
+            Category = "Events",
+            Location = "Newcastle",
+            DailyRate = 14.00m,
+            OwnerUserId = mainOwner.Id,
+            IsActive = true,
+            CreatedAtUtc = DateTime.UtcNow
+        },
+        new Item
+        {
+            Title = "Steam Cleaner",
+            Description = "Multi-surface steam cleaner with accessories.",
+            Category = "Home",
+            Location = "Sheffield",
+            DailyRate = 11.50m,
+            OwnerUserId = mainOwner.Id,
+            IsActive = true,
+            CreatedAtUtc = DateTime.UtcNow
+        },
+        new Item
+        {
+            Title = "Lawn Aerator",
+            Description = "Manual lawn aerator for garden maintenance.",
+            Category = "Garden",
+            Location = "Bristol",
+            DailyRate = 9.00m,
+            OwnerUserId = mainOwner.Id,
             IsActive = true,
             CreatedAtUtc = DateTime.UtcNow
         }
     };
 
-    db.Items.AddRange(items);
+    var missingItems = items
+        .Where(item => !existingTitles.Contains(item.Title, StringComparer.OrdinalIgnoreCase))
+        .ToList();
+
+    if (missingItems.Count == 0)
+    {
+        await ReassignKnownListingOwnersAsync(db, mainOwner.Id, secondaryOwner.Id, thirdOwner.Id);
+        return;
+    }
+
+    db.Items.AddRange(missingItems);
     await db.SaveChangesAsync();
+    await ReassignKnownListingOwnersAsync(db, mainOwner.Id, secondaryOwner.Id, thirdOwner.Id);
+}
+
+static async Task<User> EnsureTestUserAsync(AppDbContext db, string firstName, string lastName, string email, string password)
+{
+    var normalizedEmail = email.Trim().ToLowerInvariant();
+    var user = await db.Users
+        .Include(u => u.UserRoles)
+        .FirstOrDefaultAsync(u => u.Email == normalizedEmail);
+
+    var salt = BCrypt.Net.BCrypt.GenerateSalt();
+    var hash = BCrypt.Net.BCrypt.HashPassword(password, salt);
+
+    if (user is null)
+    {
+        user = new User
+        {
+            FirstName = firstName,
+            LastName = lastName,
+            Email = normalizedEmail,
+            PasswordSalt = salt,
+            PasswordHash = hash,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        db.Users.Add(user);
+        await db.SaveChangesAsync();
+    }
+    else
+    {
+        user.FirstName = firstName;
+        user.LastName = lastName;
+        user.PasswordSalt = salt;
+        user.PasswordHash = hash;
+        user.IsActive = true;
+        user.UpdatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+    }
+
+    var defaultRole = await db.Roles.FirstOrDefaultAsync(r => r.IsDefault);
+    if (defaultRole is not null && !await db.UserRoles.AnyAsync(ur => ur.UserId == user.Id && ur.RoleId == defaultRole.Id))
+    {
+        db.UserRoles.Add(new UserRole(user.Id, defaultRole.Id));
+        await db.SaveChangesAsync();
+    }
+
+    return user;
+}
+
+static async Task ReassignKnownListingOwnersAsync(AppDbContext db, int mainOwnerId, int secondaryOwnerId, int thirdOwnerId)
+{
+    var ownerByTitle = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
+    {
+        ["Makita Power Drill"] = mainOwnerId,
+        ["Mountain Bike"] = mainOwnerId,
+        ["Camping Tent"] = mainOwnerId,
+        ["DJI Drone"] = mainOwnerId,
+        ["Pressure Washer"] = mainOwnerId,
+        ["Folding Tables Set"] = mainOwnerId,
+        ["Steam Cleaner"] = mainOwnerId,
+        ["Lawn Aerator"] = mainOwnerId,
+        ["xbox"] = mainOwnerId,
+        ["Projector"] = secondaryOwnerId,
+        ["Cordless Jigsaw Pro"] = thirdOwnerId,
+        ["500 Test Saw"] = thirdOwnerId
+    };
+
+    var knownTitles = ownerByTitle.Keys.ToList();
+    var items = await db.Items
+        .Where(item => knownTitles.Contains(item.Title))
+        .ToListAsync();
+
+    var changed = false;
+    foreach (var item in items)
+    {
+        var expectedOwnerId = ownerByTitle[item.Title];
+        if (item.OwnerUserId == expectedOwnerId)
+        {
+            continue;
+        }
+
+        item.OwnerUserId = expectedOwnerId;
+        item.UpdatedAtUtc = DateTime.UtcNow;
+        changed = true;
+    }
+
+    if (changed)
+    {
+        await db.SaveChangesAsync();
+    }
 }
 
 static class MiniValidator

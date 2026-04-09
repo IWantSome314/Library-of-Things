@@ -26,7 +26,7 @@ public class AppDbContext : DbContext
     private static string ResolveConnectionString()
     {
         var envConnectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING");
-        if (!string.IsNullOrWhiteSpace(envConnectionString))
+        if (!string.IsNullOrWhiteSpace(envConnectionString) && CanReachPostgres(envConnectionString))
         {
             return envConnectionString;
         }
@@ -39,19 +39,27 @@ public class AppDbContext : DbContext
             ? new[] { "10.0.2.2", "host.docker.internal", "localhost", "db" }
             : new[] { "localhost", "host.docker.internal", "10.0.2.2", "db" };
 
-        var candidates = new List<string> { defaultConnectionString };
-        foreach (var host in hostCandidates)
-        {
-            var candidateBuilder = new NpgsqlConnectionStringBuilder(defaultConnectionString)
-            {
-                Host = host,
-                Port = 5432
-            };
+        var candidates = new List<string>();
 
-            var candidate = candidateBuilder.ConnectionString;
-            if (!candidates.Contains(candidate, StringComparer.OrdinalIgnoreCase))
+        AddConnectionStringCandidate(candidates, envConnectionString);
+        AddConnectionStringCandidate(candidates, defaultConnectionString);
+
+        foreach (var baseConnectionString in new[] { envConnectionString, defaultConnectionString })
+        {
+            if (string.IsNullOrWhiteSpace(baseConnectionString))
             {
-                candidates.Add(candidate);
+                continue;
+            }
+
+            foreach (var host in hostCandidates)
+            {
+                var candidateBuilder = new NpgsqlConnectionStringBuilder(baseConnectionString)
+                {
+                    Host = host,
+                    Port = 5432
+                };
+
+                AddConnectionStringCandidate(candidates, candidateBuilder.ConnectionString);
             }
         }
 
@@ -64,6 +72,19 @@ public class AppDbContext : DbContext
         }
 
         return defaultConnectionString;
+    }
+
+    private static void AddConnectionStringCandidate(List<string> candidates, string? connectionString)
+    {
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            return;
+        }
+
+        if (!candidates.Contains(connectionString, StringComparer.OrdinalIgnoreCase))
+        {
+            candidates.Add(connectionString);
+        }
     }
 
     private static string? GetConfiguredConnectionString()

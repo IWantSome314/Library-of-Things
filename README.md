@@ -1,10 +1,73 @@
 # StarterApp Environment and JWT Integration Log
 
-Last updated: 2026-04-09
+Last updated: 2026-04-14
+
+## Criteria Checklist Summary
+
+This section maps the requested assessment tasks to the current implementation status and shows where each one is evidenced elsewhere in this README.
+
+### User Authentication Integration
+
+- [x] Integrate StarterApp authentication with backend API
+- [x] Obtain and store JWT token from API using `POST /auth/token`
+- [x] Include token in authenticated API requests
+- [x] Handle token expiration and refresh
+
+Related evidence in this README:
+- `## Goal Review` → `### User Authentication Integration`
+- `## Detailed Integration Notes` → `#### New API project`
+- `## Detailed Integration Notes` → `#### MAUI client JWT lifecycle updates`
+- `## Validation Performed`
+
+### Item Management
+
+- [x] Create item listing with title, description, daily rate, category, and location
+- [x] View list of all items
+- [x] View detailed item information
+- [x] Update item details as owner only
+
+Related evidence in this README:
+- `## Goal Review` → `### Item Management`
+- `## Item Management (JWT API Path) - Completed`
+- `## Validation Performed`
+
+### Basic Rental Request
+
+- [x] Submit rental request for an item
+- [x] View list of rental requests (incoming and outgoing)
+
+Related evidence in this README:
+- `## Item Management (JWT API Path) - Completed`
+- `## Post-Integration Troubleshooting and Fixes` → rental request sections
+- `## Validation status`
+
+### MVVM Architecture
+
+- [x] ViewModels for all main pages
+- [x] ObservableObject for property notification
+- [x] Commands instead of event handlers
+- [ ] Clear separation: View → ViewModel → Model is fully implemented
+
+Related evidence in this README:
+- `## Detailed Integration Notes` → `#### MAUI client JWT lifecycle updates`
+- Code structure across `Views`, `ViewModels`, and `Services`
+- Note: some user-management flow still uses direct database access, so this area is mostly complete rather than fully strict.
+
+### Repository Pattern
+
+- [ ] `IRepository<T>` interface present
+- [ ] Repositories for Items, Rentals, and Reviews present as a formal repository layer
+- [ ] Data access fully abstracted from ViewModels through the requested repository pattern
+
+Related evidence in this README:
+- `## Known Follow-up Work`
+- Current implementation uses service abstractions such as item and rental API services rather than repository classes.
 
 ## Current Status
 
 - API startup is working in the development container.
+- Environment reload now re-runs a self-healing startup helper so the JWT API and emulator port forwarding recover automatically on each load.
+- A lightweight background watchdog now stays active in the dev container and restarts the API or localhost tunnel automatically if either drops.
 - Database migrations now complete successfully against the current legacy dev database.
 - JWT authentication endpoints are working.
 - Item list, detail, create, and owner-only update endpoints are working.
@@ -13,6 +76,23 @@ Last updated: 2026-04-09
 - ADB connectivity from the container to the emulator is working, including `adb devices` and `adb reverse tcp:8080 tcp:8080`.
 
 ## Changes Made
+
+### 2026-04-14
+
+#### Startup reliability on environment load
+
+- Added `setup/ensure-dev-runtime.sh` to self-heal the dev runtime by starting the API if port `8080` is not already healthy, ensuring `adb-proxy.py` is running, and retrying `adb reverse tcp:8080 tcp:8080` instead of failing after a single attempt.
+- Updated `.devcontainer/devcontainer.json` so the same startup helper runs on both container start and every editor attach, which makes reloads and reconnects restore the JWT login path automatically.
+- Updated `.vscode/tasks.json` so the folder-open tasks use the retrying startup helper instead of one-shot startup commands.
+- Updated `docker-compose.yml` so the `api` service uses `restart: unless-stopped`, improving resilience if the API process exits during startup.
+
+#### Host-facing API availability for emulator login
+
+- Reproduced the remaining login failure and confirmed the API process could be healthy inside the dev container while the emulator still could not reach `http://localhost:8080`.
+- Updated `docker-compose.yml` so the always-running `app` devcontainer publishes port `8080` and boots the API self-healing helper as part of container startup.
+- Hardened `setup/ensure-dev-runtime.sh` so the ADB reverse step now verifies the tunnel is actually present and keeps retrying in the background until the emulator is ready.
+- Added a lightweight background watchdog so the dev runtime keeps re-checking API health and the emulator tunnel after the environment loads, instead of relying on a single startup attempt.
+- This removes the dependency on the separate compose `api` container being visible before JWT login can succeed after an environment load.
 
 ### 2026-04-09
 
@@ -40,9 +120,30 @@ Last updated: 2026-04-09
 - Fixed rental request submissions returning HTTP 500 by normalizing request dates to UTC before EF writes them to PostgreSQL `timestamp with time zone` columns.
 - Added deterministic owner test accounts with known passwords and reassigned the seeded sample listings to those accounts so approval testing can be done by logging in as the listing owner.
 - Updated the `My Rentals` screen to use `My Listings` and `Requests` tabs, and expanded request cards to show the requester, price, and note left by the user.
-- Added owner actions to approve or deny pending requests and split approved requests into an `Active Rentals` section on the `My Rentals` screen.
-
+- Added owner actions to approve or deny pending requests and split approved requests into an `Active Rentals` section on the `My Rentals` screen.- Fixed the accept-request UI flow so an approved request is removed from `Pending Requests` and shown under `Active Rentals` immediately after approval.
 ## Errors Found and Resolution
+
+### 2026-04-14: Login failed after environment reload even though the code was already correct
+
+Symptoms:
+
+- Android login intermittently showed `cannot reach auth server at http://localhost:8080/auth/token` right after opening the environment.
+- The existing one-shot startup path could miss the correct timing window for the API process or `adb reverse`, leaving the app without a working route to the auth server.
+
+Root cause:
+
+- Startup recovery depended on a single folder-open task and a single `adb reverse` attempt.
+- When the container reattached or the emulator bridge was not quite ready yet, the automation could exit too early and not retry.
+- In the failing sessions, the API was only reachable inside the devcontainer and was not actually published on the host-facing `8080` path used by the emulator tunnel.
+
+Fixes applied:
+
+- Added a shared startup helper script that checks API health, starts the backend when needed, and retries the emulator tunnel setup automatically.
+- Wired that helper into both the devcontainer lifecycle and the VS Code startup tasks.
+- Added automatic restart behavior for the compose `api` service.
+- Published port `8080` from the persistent `app` container and started the API helper during container boot so emulator login does not depend on the separate API container coming up first.
+- Strengthened the ADB reverse logic so it confirms the reverse entry exists instead of exiting silently when no device is ready yet.
+- Added a persistent runtime watchdog that automatically rechecks and restores the backend plus tunnel after environment load or transient startup timing issues.
 
 ### 2026-04-09: API process crashed on startup with unresolved database host
 
@@ -129,6 +230,16 @@ Resolved state:
 - `adb reverse tcp:8080 tcp:8080` is active and the MAUI app can use `http://localhost:8080` through the emulator tunnel.
 
 ## Validation Performed
+
+### 2026-04-14 environment-load recovery validation
+
+Successful checks:
+
+- `GET /health` from inside the dev container returned `200 OK`.
+- `adb reverse --list` was initially empty in the failing state, confirming the emulator tunnel was missing even though the API process existed.
+- Running the updated startup helper restored the tunnel and `adb reverse --list` then showed `tcp:8080 tcp:8080`.
+- `POST /auth/token` returned `200 OK` after the runtime helper repair, confirming JWT login was available once the route was restored.
+- Forced-failure recovery was revalidated by deliberately dropping both the API process and the reverse tunnel, and the watchdog restored both automatically until health and login returned `200 OK` again.
 
 ### 2026-04-09 API validation
 
@@ -658,6 +769,26 @@ Files:
 - `StarterApp/ViewModels/RentalListViewModel.cs`
 - `StarterApp/Views/RentalListPage.xaml`
 
+### 12) Approved requests did not move into `Active Rentals` immediately in the UI
+
+Symptoms:
+
+- Tapping `Approve` succeeded, but the accepted request could still appear under `Pending Requests` and the `Active Rentals` section stayed empty until a later refresh.
+
+Root cause:
+
+- The rentals view model tried to reload the page while `IsBusy` was still set.
+- That caused the refresh method to exit early, so the collections were not updated after the approval action.
+
+Fixes applied:
+
+- Updated the rentals view model to move the approved request into the `Active Rentals` collection immediately.
+- Allowed the reload path to run for status updates so the screen stays in sync with the backend after approval or denial.
+
+Files:
+
+- `StarterApp/ViewModels/RentalListViewModel.cs`
+
 ### Final validated state after fixes
 
 - API responds on `/health` with HTTP `200`.
@@ -903,15 +1034,3 @@ Use this script if you are not confident explaining C# details.
   - Resolved the Android launch crash related to `TextAppearance` by creating `StarterApp/Platforms/Android/Resources/values/styles.xml` and configuring MAUI themes to inherit from `Theme.MaterialComponents`.
 - API port forwarding:
   - Reinvoked `adb reverse tcp:8080 tcp:8080` so the Android emulator could reach the host API at `http://localhost:8080`.
-
-## What You Need To Do Next
-
-### Current practical next steps
-
-- Rebuild or reopen the dev container if you want the updated `.devcontainer/devcontainer.json` startup settings to apply automatically on a fresh session.
-- If host ADB is reset again in future, rerun:
-
-```bash
-adb kill-server
-adb -a start-server
-```

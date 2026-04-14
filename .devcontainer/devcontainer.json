@@ -14,7 +14,8 @@
         }
     },
     "remoteUser": "root",
-    "postStartCommand": "bash -lc 'pgrep -f \"python3 /workspace/adb-proxy.py\" >/dev/null || (nohup python3 /workspace/adb-proxy.py >/tmp/adb-proxy.log 2>&1 &); adb reverse tcp:8080 tcp:8080 || true'",
+    "postStartCommand": "bash /workspace/setup/ensure-dev-runtime.sh",
+    "postAttachCommand": "bash /workspace/setup/ensure-dev-runtime.sh",
     "portsAttributes": {
         "5037": { "onAutoForward": "ignore" },
         "5554": { "onAutoForward": "silent" },

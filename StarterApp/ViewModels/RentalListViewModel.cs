@@ -78,9 +78,9 @@ public partial class RentalListViewModel : BaseViewModel
         await _navigationService.NavigateToAsync("MainPage");
     }
 
-    private async Task LoadAsync()
+    private async Task LoadAsync(bool allowBusyRefresh = false)
     {
-        if (IsBusy) return;
+        if (IsBusy && !allowBusyRefresh) return;
 
         try
         {
@@ -146,6 +146,26 @@ public partial class RentalListViewModel : BaseViewModel
         await UpdateRequestStatusAsync(request, "Denied", "Rental request denied.");
     }
 
+    private void MoveRequestToCorrectSection(RentalRequestSummaryDto request, string status)
+    {
+        request.Status = status;
+
+        var pendingMatch = PendingRequests.FirstOrDefault(item => item.Id == request.Id);
+        if (pendingMatch is not null)
+        {
+            PendingRequests.Remove(pendingMatch);
+        }
+
+        if (string.Equals(status, "Approved", StringComparison.OrdinalIgnoreCase)
+            && !ActiveRentals.Any(item => item.Id == request.Id))
+        {
+            ActiveRentals.Insert(0, request);
+        }
+
+        HasPendingRequests = PendingRequests.Count > 0;
+        HasActiveRentals = ActiveRentals.Count > 0;
+    }
+
     private async Task UpdateRequestStatusAsync(RentalRequestSummaryDto? request, string status, string successMessage)
     {
         if (request is null || IsBusy)
@@ -159,6 +179,7 @@ public partial class RentalListViewModel : BaseViewModel
             ClearError();
 
             await _rentalApiService.UpdateRentalRequestStatusAsync(request.Id, status);
+            MoveRequestToCorrectSection(request, status);
 
             var currentPage = Application.Current?.Windows.FirstOrDefault()?.Page;
             if (currentPage is not null)
@@ -166,7 +187,7 @@ public partial class RentalListViewModel : BaseViewModel
                 await currentPage.DisplayAlert("Success", successMessage, "OK");
             }
 
-            await LoadAsync();
+            await LoadAsync(allowBusyRefresh: true);
         }
         catch (Exception ex)
         {

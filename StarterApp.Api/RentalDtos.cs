@@ -28,3 +28,10 @@ public sealed class RentalRequestSummaryResponse
     public string Message { get; set; } = string.Empty;
     public DateTime CreatedAtUtc { get; set; }
 }
+
+public sealed class RentalStatusChangeResponse
+{
+    public int Id { get; set; }
+    public string Status { get; set; } = string.Empty;
+    public DateTime UpdatedAtUtc { get; set; }
+}

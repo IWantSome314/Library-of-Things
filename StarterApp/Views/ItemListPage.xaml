@@ -13,12 +13,39 @@
                      Command="{Binding CreateItemCommand}" />
     </ContentPage.ToolbarItems>
 
-    <Grid RowDefinitions="Auto,*" Padding="12">
-        <SearchBar Grid.Row="0"
+    <Grid RowDefinitions="Auto,Auto,*" Padding="12">
+        <HorizontalStackLayout Grid.Row="0"
+                               Spacing="10"
+                               Margin="0,0,0,10">
+            <Button Text="Browse Listings"
+                    Command="{Binding ShowBrowseListingsCommand}">
+                <Button.Triggers>
+                    <DataTrigger TargetType="Button" Binding="{Binding ShowingBrowseListings}" Value="True">
+                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+                    </DataTrigger>
+                    <DataTrigger TargetType="Button" Binding="{Binding ShowingBrowseListings}" Value="False">
+                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray600}}" />
+                    </DataTrigger>
+                </Button.Triggers>
+            </Button>
+            <Button Text="My Listings"
+                    Command="{Binding ShowMyListingsCommand}">
+                <Button.Triggers>
+                    <DataTrigger TargetType="Button" Binding="{Binding ShowingMyListings}" Value="True">
+                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+                    </DataTrigger>
+                    <DataTrigger TargetType="Button" Binding="{Binding ShowingMyListings}" Value="False">
+                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray600}}" />
+                    </DataTrigger>
+                </Button.Triggers>
+            </Button>
+        </HorizontalStackLayout>
+
+        <SearchBar Grid.Row="1"
                    Text="{Binding SearchText}"
                    Placeholder="Search by title, category or location" />
 
-        <RefreshView Grid.Row="1"
+        <RefreshView Grid.Row="2"
                      IsRefreshing="{Binding IsBusy}"
                      Command="{Binding RefreshCommand}">
             <CollectionView ItemsSource="{Binding Items}"
@@ -41,7 +68,7 @@
                                 <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:ItemListViewModel}}, Path=OpenItemCommand}"
                                                       CommandParameter="{Binding .}" />
                             </Border.GestureRecognizers>
-                            <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto">
+                            <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="*,Auto">
                                 <Label Grid.Row="0" Grid.Column="0"
                                        Text="{Binding Title}"
                                        FontSize="17"
@@ -60,6 +87,20 @@
                                        Text="{Binding OwnerName}"
                                        FontSize="12"
                                        TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}" />
+
+                                <HorizontalStackLayout Grid.Row="3"
+                                               Grid.ColumnSpan="2"
+                                               Spacing="10"
+                                               Margin="0,10,0,0">
+                                    <Button Text="View"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:ItemListViewModel}}, Path=OpenItemCommand}"
+                                        CommandParameter="{Binding .}" />
+                                    <Button Text="Request"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:ItemListViewModel}}, Path=RequestItemCommand}"
+                                        CommandParameter="{Binding .}"
+                                        Style="{StaticResource OutlineButtonStyle}"
+                                        IsVisible="{Binding CanRequest}" />
+                                </HorizontalStackLayout>
                             </Grid>
                         </Border>
                     </DataTemplate>

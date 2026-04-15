@@ -44,6 +44,20 @@ public class RentalApiService : IRentalApiService
         return items ?? new List<RentalRequestSummaryDto>();
     }
 
+    public async Task UpdateRentalRequestStatusAsync(int rentalRequestId, string status, CancellationToken cancellationToken = default)
+    {
+        var normalizedStatus = status.Trim().ToLowerInvariant();
+        var path = normalizedStatus switch
+        {
+            "approved" => $"/rentals/{rentalRequestId}/approve",
+            "denied" => $"/rentals/{rentalRequestId}/deny",
+            _ => throw new ArgumentOutOfRangeException(nameof(status), "Status must be Approved or Denied.")
+        };
+
+        using var response = await _httpClient.PostAsync(path, content: null, cancellationToken);
+        await EnsureSuccessWithMessageAsync(response);
+    }
+
     private static async Task EnsureSuccessWithMessageAsync(HttpResponseMessage response)
     {
         if (response.IsSuccessStatusCode)

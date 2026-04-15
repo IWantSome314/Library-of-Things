@@ -31,6 +31,9 @@ public partial class MainViewModel : BaseViewModel
     [ObservableProperty]
     private string welcomeMessage = string.Empty;
 
+    [ObservableProperty]
+    private string dashboardDescription = "Library of Things for borrowing nearby items.";
+
     /// @brief Indicates whether the current user has admin privileges
     /// @details Observable property used to control visibility of admin features
     [ObservableProperty]
@@ -66,7 +69,7 @@ public partial class MainViewModel : BaseViewModel
         
         if (CurrentUser != null)
         {
-            WelcomeMessage = $"Welcome, {CurrentUser.FullName}!";
+            WelcomeMessage = $"Welcome, {CurrentUser.FirstName}";
         }
     }
 

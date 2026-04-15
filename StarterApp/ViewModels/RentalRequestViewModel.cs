@@ -58,8 +58,13 @@ public partial class RentalRequestViewModel : BaseViewModel
             };
 
             await _rentalApiService.CreateRentalRequestAsync(request);
-            
-            await Application.Current!.MainPage!.DisplayAlert("Success", "Rental request submitted.", "OK");
+
+            var currentPage = Application.Current?.Windows.FirstOrDefault()?.Page;
+            if (currentPage is not null)
+            {
+                await currentPage.DisplayAlert("Success", "Rental request submitted.", "OK");
+            }
+
             await _navigationService.NavigateBackAsync();
         }
         catch (Exception ex)

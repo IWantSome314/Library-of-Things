@@ -13,26 +13,26 @@
 
     <Grid RowDefinitions="Auto,*">
         <HorizontalStackLayout Grid.Row="0" Spacing="10" Padding="10" HorizontalOptions="Center">
-            <Button Text="Incoming" 
+            <Button Text="My Listings" 
                     Command="{Binding ToggleViewCommand}" 
-                    CommandParameter="incoming">
+                    CommandParameter="listings">
                 <Button.Triggers>
-                    <DataTrigger TargetType="Button" Binding="{Binding ShowIncoming}" Value="True">
+                    <DataTrigger TargetType="Button" Binding="{Binding ShowMyListings}" Value="True">
                         <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
                     </DataTrigger>
-                    <DataTrigger TargetType="Button" Binding="{Binding ShowIncoming}" Value="False">
+                    <DataTrigger TargetType="Button" Binding="{Binding ShowMyListings}" Value="False">
                         <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray600}}" />
                     </DataTrigger>
                 </Button.Triggers>
             </Button>
-            <Button Text="Outgoing" 
+            <Button Text="Requests" 
                     Command="{Binding ToggleViewCommand}" 
-                    CommandParameter="outgoing">
+                    CommandParameter="requests">
                 <Button.Triggers>
-                    <DataTrigger TargetType="Button" Binding="{Binding ShowOutgoing}" Value="True">
+                    <DataTrigger TargetType="Button" Binding="{Binding ShowRequests}" Value="True">
                         <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
                     </DataTrigger>
-                    <DataTrigger TargetType="Button" Binding="{Binding ShowOutgoing}" Value="False">
+                    <DataTrigger TargetType="Button" Binding="{Binding ShowRequests}" Value="False">
                         <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray600}}" />
                     </DataTrigger>
                 </Button.Triggers>
@@ -41,47 +41,79 @@
 
         <RefreshView Grid.Row="1" IsRefreshing="{Binding IsBusy}" Command="{Binding RefreshCommand}">
             <Grid>
-                <!-- Incoming Requests -->
-                <CollectionView ItemsSource="{Binding IncomingRequests}" IsVisible="{Binding ShowIncoming}" Margin="10">
+                <CollectionView ItemsSource="{Binding MyListings}" IsVisible="{Binding ShowMyListings}" Margin="10">
                     <CollectionView.EmptyView>
-                        <Label Text="No incoming requests" HorizontalOptions="Center" VerticalOptions="Center" />
+                        <Label Text="You have no active listings yet" HorizontalOptions="Center" VerticalOptions="Center" />
                     </CollectionView.EmptyView>
                     <CollectionView.ItemTemplate>
-                        <DataTemplate x:DataType="models:RentalRequestSummaryDto">
+                        <DataTemplate x:DataType="models:ItemSummaryDto">
                             <Frame Padding="10" Margin="0,0,0,10" CornerRadius="8">
                                 <VerticalStackLayout Spacing="5">
-                                    <Label Text="{Binding ItemTitle}" FontAttributes="Bold" FontSize="16" />
-                                    <Label Text="{Binding RequestorName, StringFormat='From: {0}'}" />
-                                    <Label Text="{Binding StartDate, StringFormat='Start: {0:MMM dd, yyyy}'}" />
-                                    <Label Text="{Binding EndDate, StringFormat='End: {0:MMM dd, yyyy}'}" />
-                                    <Label Text="{Binding TotalPrice, StringFormat='Total: ${0:F2}'}" />
-                                    <Label Text="{Binding Status, StringFormat='Status: {0}'}" FontAttributes="Bold" />
+                                    <Label Text="{Binding Title}" FontAttributes="Bold" FontSize="16" />
+                                    <Label Text="{Binding Category, StringFormat='Category: {0}'}" />
+                                    <Label Text="{Binding Location, StringFormat='Location: {0}'}" />
+                                    <Label Text="{Binding DailyRate, StringFormat='Daily rate: ${0:F2}'}" />
                                 </VerticalStackLayout>
                             </Frame>
                         </DataTemplate>
                     </CollectionView.ItemTemplate>
                 </CollectionView>
 
-                <!-- Outgoing Requests -->
-                <CollectionView ItemsSource="{Binding OutgoingRequests}" IsVisible="{Binding ShowOutgoing}" Margin="10">
-                    <CollectionView.EmptyView>
-                        <Label Text="No outgoing requests" HorizontalOptions="Center" VerticalOptions="Center" />
-                    </CollectionView.EmptyView>
-                    <CollectionView.ItemTemplate>
-                        <DataTemplate x:DataType="models:RentalRequestSummaryDto">
-                            <Frame Padding="10" Margin="0,0,0,10" CornerRadius="8">
-                                <VerticalStackLayout Spacing="5">
-                                    <Label Text="{Binding ItemTitle}" FontAttributes="Bold" FontSize="16" />
-                                    <Label Text="{Binding OwnerName, StringFormat='To: {0}'}" />
-                                    <Label Text="{Binding StartDate, StringFormat='Start: {0:MMM dd, yyyy}'}" />
-                                    <Label Text="{Binding EndDate, StringFormat='End: {0:MMM dd, yyyy}'}" />
-                                    <Label Text="{Binding TotalPrice, StringFormat='Total: ${0:F2}'}" />
-                                    <Label Text="{Binding Status, StringFormat='Status: {0}'}" FontAttributes="Bold" />
-                                </VerticalStackLayout>
-                            </Frame>
-                        </DataTemplate>
-                    </CollectionView.ItemTemplate>
-                </CollectionView>
+                <ScrollView IsVisible="{Binding ShowRequests}" Margin="10">
+                    <VerticalStackLayout Spacing="16">
+                        <VerticalStackLayout Spacing="10">
+                            <Label Text="Pending Requests" FontAttributes="Bold" FontSize="18" />
+                            <Label Text="No pending requests right now" IsVisible="{Binding HasPendingRequests, Converter={StaticResource InvertedBoolConverter}}" />
+                            <VerticalStackLayout BindableLayout.ItemsSource="{Binding PendingRequests}" Spacing="10">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="models:RentalRequestSummaryDto">
+                                        <Frame Padding="10" CornerRadius="8">
+                                            <VerticalStackLayout Spacing="5">
+                                                <Label Text="{Binding ItemTitle}" FontAttributes="Bold" FontSize="16" />
+                                                <Label Text="{Binding RequestorName, StringFormat='Requested by: {0}'}" />
+                                                <Label Text="{Binding StartDate, StringFormat='Start: {0:MMM dd, yyyy}'}" />
+                                                <Label Text="{Binding EndDate, StringFormat='End: {0:MMM dd, yyyy}'}" />
+                                                <Label Text="{Binding TotalPrice, StringFormat='Price: ${0:F2}'}" />
+                                                <Label Text="{Binding Message, StringFormat='Note: {0}'}" />
+                                                <HorizontalStackLayout Spacing="10" Margin="0,8,0,0">
+                                                    <Button Text="Approve"
+                                                            Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:RentalListViewModel}}, Path=ApproveRequestCommand}"
+                                                            CommandParameter="{Binding .}" />
+                                                    <Button Text="Deny"
+                                                            Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:RentalListViewModel}}, Path=DenyRequestCommand}"
+                                                            CommandParameter="{Binding .}"
+                                                            Style="{StaticResource OutlineButtonStyle}" />
+                                                </HorizontalStackLayout>
+                                            </VerticalStackLayout>
+                                        </Frame>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </VerticalStackLayout>
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout Spacing="10">
+                            <Label Text="Active Rentals" FontAttributes="Bold" FontSize="18" />
+                            <Label Text="No active rentals yet" IsVisible="{Binding HasActiveRentals, Converter={StaticResource InvertedBoolConverter}}" />
+                            <VerticalStackLayout BindableLayout.ItemsSource="{Binding ActiveRentals}" Spacing="10">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="models:RentalRequestSummaryDto">
+                                        <Frame Padding="10" CornerRadius="8">
+                                            <VerticalStackLayout Spacing="5">
+                                                <Label Text="{Binding ItemTitle}" FontAttributes="Bold" FontSize="16" />
+                                                <Label Text="{Binding RequestorName, StringFormat='Rented by: {0}'}" />
+                                                <Label Text="{Binding StartDate, StringFormat='Start: {0:MMM dd, yyyy}'}" />
+                                                <Label Text="{Binding EndDate, StringFormat='End: {0:MMM dd, yyyy}'}" />
+                                                <Label Text="{Binding TotalPrice, StringFormat='Price: ${0:F2}'}" />
+                                                <Label Text="{Binding Message, StringFormat='Note: {0}'}" />
+                                                <Label Text="{Binding Status, StringFormat='Status: {0}'}" FontAttributes="Bold" />
+                                            </VerticalStackLayout>
+                                        </Frame>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </VerticalStackLayout>
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </ScrollView>
             </Grid>
         </RefreshView>
     </Grid>

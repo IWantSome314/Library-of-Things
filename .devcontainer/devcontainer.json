@@ -2,6 +2,7 @@
     "name": "MAUI Dev Environment",
     "dockerComposeFile": ["../docker-compose.yml"],
     "service": "app",
+    "runServices": ["app", "api", "db"],
     "workspaceFolder": "/workspace",
     "customizations": {
         "vscode": {
@@ -13,7 +14,8 @@
         }
     },
     "remoteUser": "root",
-    "postStartCommand": "adb reverse tcp:8080 tcp:8080 || true",
+    "postStartCommand": "bash /workspace/setup/ensure-dev-runtime.sh",
+    "postAttachCommand": "bash /workspace/setup/ensure-dev-runtime.sh",
     "portsAttributes": {
         "5037": { "onAutoForward": "ignore" },
         "5554": { "onAutoForward": "silent" },

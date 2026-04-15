@@ -20,6 +20,8 @@ public partial class LoginViewModel : BaseViewModel
     /// @brief Navigation service for managing page navigation
     private readonly INavigationService _navigationService;
 
+    private readonly IUserNotificationService _notificationService;
+
     /// @brief The user's email address
     /// @details Observable property bound to the email input field
     [ObservableProperty]
@@ -47,17 +49,22 @@ public partial class LoginViewModel : BaseViewModel
     {
         // Default constructor for design time support
         Title = "Login";
+        Email = "admin@company.com";
+        Password = "Admin123!";
     }
 
     /// @brief Initializes a new instance of the LoginViewModel class
     /// @param authService The authentication service instance
     /// @param navigationService The navigation service instance
     /// @details Sets up the required services and initializes the title
-    public LoginViewModel(IAuthenticationService authService, INavigationService navigationService)
+    public LoginViewModel(IAuthenticationService authService, INavigationService navigationService, IUserNotificationService notificationService)
     {
         _authService = authService;
         _navigationService = navigationService;
+        _notificationService = notificationService;
         Title = "Login";
+        Email = "admin@company.com";
+        Password = "Admin123!";
     }
 
     /// @brief Performs user login authentication
@@ -118,6 +125,6 @@ public partial class LoginViewModel : BaseViewModel
     private async Task ForgotPasswordAsync()
     {
         // TODO: Implement forgot password functionality
-        await Application.Current.MainPage.DisplayAlert("Info", "Forgot password functionality not implemented yet", "OK");
+        await _notificationService.ShowAlertAsync("Info", "Forgot password functionality not implemented yet");
     }
 }

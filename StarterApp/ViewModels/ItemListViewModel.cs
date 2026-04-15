@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using StarterApp.Models;
 using StarterApp.Services;
 
 namespace StarterApp.ViewModels;
@@ -169,15 +170,4 @@ public partial class ItemListViewModel : BaseViewModel
             })
             .ToList();
     }
-}
-
-public sealed class ItemListRow
-{
-    public int Id { get; set; }
-    public string Title { get; set; } = string.Empty;
-    public string Category { get; set; } = string.Empty;
-    public decimal DailyRate { get; set; }
-    public string Location { get; set; } = string.Empty;
-    public string OwnerName { get; set; } = string.Empty;
-    public bool CanRequest { get; set; }
 }

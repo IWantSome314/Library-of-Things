@@ -21,6 +21,8 @@ public partial class MainViewModel : BaseViewModel
     /// @brief Navigation service for managing page navigation
     private readonly INavigationService _navigationService;
 
+    private readonly IUserNotificationService _notificationService;
+
     /// @brief The currently authenticated user
     /// @details Observable property containing the current user's information
     [ObservableProperty]
@@ -51,10 +53,11 @@ public partial class MainViewModel : BaseViewModel
     /// @param authService The authentication service instance
     /// @param navigationService The navigation service instance
     /// @details Sets up the required services, initializes the title, and loads user data
-    public MainViewModel(IAuthenticationService authService, INavigationService navigationService)
+    public MainViewModel(IAuthenticationService authService, INavigationService navigationService, IUserNotificationService notificationService)
     {
         _authService = authService;
         _navigationService = navigationService;
+        _notificationService = notificationService;
         Title = "Dashboard";
 
         LoadUserData();
@@ -79,7 +82,7 @@ public partial class MainViewModel : BaseViewModel
     [RelayCommand]
     private async Task LogoutAsync()
     {
-        var result = await Application.Current.MainPage.DisplayAlert(
+        var result = await _notificationService.ShowConfirmationAsync(
             "Logout", 
             "Are you sure you want to logout?", 
             "Yes", 
@@ -130,7 +133,7 @@ public partial class MainViewModel : BaseViewModel
     {
         if (!IsAdmin)
         {
-            await Application.Current.MainPage.DisplayAlert("Access Denied", "You don't have permission to access admin features.", "OK");
+            await _notificationService.ShowAlertAsync("Access Denied", "You don't have permission to access admin features.");
             return;
         }
         

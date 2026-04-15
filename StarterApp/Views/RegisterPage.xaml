@@ -2,12 +2,7 @@
 <ContentPage x:Class="StarterApp.Views.RegisterPage"
              xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:vm="clr-namespace:StarterApp.ViewModels"
              Title="{Binding Title}">
-
-    <ContentPage.BindingContext>
-        <vm:RegisterViewModel />
-    </ContentPage.BindingContext>
 
     <ScrollView>
         <Grid Padding="30" RowSpacing="20">

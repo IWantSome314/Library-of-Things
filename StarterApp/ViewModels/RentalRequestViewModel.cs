@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using StarterApp.Models;
 using StarterApp.Services;
 
 namespace StarterApp.ViewModels;
@@ -10,6 +11,7 @@ public partial class RentalRequestViewModel : BaseViewModel
 {
     private readonly IRentalApiService _rentalApiService;
     private readonly INavigationService _navigationService;
+    private readonly IUserNotificationService _notificationService;
 
     [ObservableProperty]
     private int itemId;
@@ -26,10 +28,14 @@ public partial class RentalRequestViewModel : BaseViewModel
     [ObservableProperty]
     private string message = string.Empty;
 
-    public RentalRequestViewModel(IRentalApiService rentalApiService, INavigationService navigationService)
+    public RentalRequestViewModel(
+        IRentalApiService rentalApiService,
+        INavigationService navigationService,
+        IUserNotificationService notificationService)
     {
         _rentalApiService = rentalApiService;
         _navigationService = navigationService;
+        _notificationService = notificationService;
         Title = "Request Rental";
     }
 
@@ -59,11 +65,7 @@ public partial class RentalRequestViewModel : BaseViewModel
 
             await _rentalApiService.CreateRentalRequestAsync(request);
 
-            var currentPage = Application.Current?.Windows.FirstOrDefault()?.Page;
-            if (currentPage is not null)
-            {
-                await currentPage.DisplayAlert("Success", "Rental request submitted.", "OK");
-            }
+            await _notificationService.ShowAlertAsync("Success", "Rental request submitted.");
 
             await _navigationService.NavigateBackAsync();
         }

@@ -21,6 +21,8 @@ public partial class RegisterViewModel : BaseViewModel
     /// @brief Navigation service for managing page navigation
     private readonly INavigationService _navigationService;
 
+    private readonly IUserNotificationService _notificationService;
+
     /// @brief The user's first name
     /// @details Observable property bound to the first name input field
     [ObservableProperty]
@@ -63,10 +65,11 @@ public partial class RegisterViewModel : BaseViewModel
     /// @param authService The authentication service instance
     /// @param navigationService The navigation service instance
     /// @details Sets up the required services and initializes the title
-    public RegisterViewModel(IAuthenticationService authService, INavigationService navigationService)
+    public RegisterViewModel(IAuthenticationService authService, INavigationService navigationService, IUserNotificationService notificationService)
     {
         _authService = authService;
         _navigationService = navigationService;
+        _notificationService = notificationService;
         Title = "Register";
     }
 
@@ -91,7 +94,7 @@ public partial class RegisterViewModel : BaseViewModel
 
             if (result.IsSuccess)
             {
-                await Application.Current.MainPage.DisplayAlert("Success", "Registration successful! Please login.", "OK");
+                await _notificationService.ShowAlertAsync("Success", "Registration successful! Please login.");
                 await _navigationService.NavigateBackAsync();
             }
             else

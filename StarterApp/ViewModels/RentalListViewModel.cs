@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using StarterApp.Models;
 using StarterApp.Services;
 
 namespace StarterApp.ViewModels;
@@ -11,6 +12,7 @@ public partial class RentalListViewModel : BaseViewModel
     private readonly IRentalApiService _rentalApiService;
     private readonly INavigationService _navigationService;
     private readonly IAuthenticationService _authenticationService;
+    private readonly IUserNotificationService _notificationService;
 
     [ObservableProperty]
     private ObservableCollection<ItemSummaryDto> myListings = new();
@@ -37,12 +39,14 @@ public partial class RentalListViewModel : BaseViewModel
         IItemApiService itemApiService,
         IRentalApiService rentalApiService,
         INavigationService navigationService,
-        IAuthenticationService authenticationService)
+        IAuthenticationService authenticationService,
+        IUserNotificationService notificationService)
     {
         _itemApiService = itemApiService;
         _rentalApiService = rentalApiService;
         _navigationService = navigationService;
         _authenticationService = authenticationService;
+        _notificationService = notificationService;
         Title = "My Rentals";
     }
 
@@ -181,11 +185,7 @@ public partial class RentalListViewModel : BaseViewModel
             await _rentalApiService.UpdateRentalRequestStatusAsync(request.Id, status);
             MoveRequestToCorrectSection(request, status);
 
-            var currentPage = Application.Current?.Windows.FirstOrDefault()?.Page;
-            if (currentPage is not null)
-            {
-                await currentPage.DisplayAlert("Success", successMessage, "OK");
-            }
+            await _notificationService.ShowAlertAsync("Success", successMessage);
 
             await LoadAsync(allowBusyRefresh: true);
         }

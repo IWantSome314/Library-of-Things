@@ -1,3 +1,5 @@
+using StarterApp.Models;
+
 namespace StarterApp.Services;
 
 public interface IRentalApiService
@@ -6,29 +8,4 @@ public interface IRentalApiService
     Task<List<RentalRequestSummaryDto>> GetIncomingRequestsAsync(CancellationToken cancellationToken = default);
     Task<List<RentalRequestSummaryDto>> GetOutgoingRequestsAsync(CancellationToken cancellationToken = default);
     Task UpdateRentalRequestStatusAsync(int rentalRequestId, string status, CancellationToken cancellationToken = default);
-}
-
-public sealed class CreateRentalRequestDto
-{
-    public int ItemId { get; set; }
-    public DateTime StartDate { get; set; }
-    public DateTime EndDate { get; set; }
-    public string Message { get; set; } = string.Empty;
-}
-
-public sealed class RentalRequestSummaryDto
-{
-    public int Id { get; set; }
-    public int ItemId { get; set; }
-    public string ItemTitle { get; set; } = string.Empty;
-    public int RequestorUserId { get; set; }
-    public string RequestorName { get; set; } = string.Empty;
-    public int OwnerUserId { get; set; }
-    public string OwnerName { get; set; } = string.Empty;
-    public DateTime StartDate { get; set; }
-    public DateTime EndDate { get; set; }
-    public string Status { get; set; } = string.Empty;
-    public decimal TotalPrice { get; set; }
-    public string Message { get; set; } = string.Empty;
-    public DateTime CreatedAtUtc { get; set; }
 }

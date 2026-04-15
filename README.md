@@ -1,6 +1,6 @@
 # StarterApp Environment and JWT Integration Log
 
-Last updated: 2026-04-14
+Last updated: 2026-04-15
 
 ## Criteria Checklist Summary
 
@@ -34,7 +34,7 @@ Related evidence in this README:
 ### Basic Rental Request
 
 - [x] Submit rental request for an item
-- [x] View list of rental requests (incoming and outgoing)
+- [ ] View list of rental requests (incoming and outgoing) in the app UI
 
 Related evidence in this README:
 - `## Item Management (JWT API Path) - Completed`
@@ -46,12 +46,15 @@ Related evidence in this README:
 - [x] ViewModels for all main pages
 - [x] ObservableObject for property notification
 - [x] Commands instead of event handlers
-- [ ] Clear separation: View → ViewModel → Model is fully implemented
+- [ ] Clear separation: View → ViewModel → Model is fully implemented across all modules
 
 Related evidence in this README:
 - `## Detailed Integration Notes` → `#### MAUI client JWT lifecycle updates`
 - Code structure across `Views`, `ViewModels`, and `Services`
-- Note: some user-management flow still uses direct database access, so this area is mostly complete rather than fully strict.
+- `## Changes Made` → `### 2026-04-15` → `#### MVVM separation re-implementation in restarted environment`
+- `## Errors Found and Resolution` → `### 2026-04-15: MVVM separation re-implementation in restarted environment`
+- `## Validation Performed` → `### 2026-04-15 MVVM separation validation`
+- `## Known Follow-up Work`
 
 ### Repository Pattern
 
@@ -76,6 +79,20 @@ Related evidence in this README:
 - ADB connectivity from the container to the emulator is working, including `adb devices` and `adb reverse tcp:8080 tcp:8080`.
 
 ## Changes Made
+
+### 2026-04-15
+
+#### MVVM separation re-implementation in restarted environment
+
+- Re-applied strict View ownership by removing XAML-instantiated `ContentPage.BindingContext` blocks from `LoginPage`, `RegisterPage`, `MainPage`, `AboutPage`, and `TempPage`.
+- Updated `AboutPage` and `TempPage` code-behind to constructor-injected ViewModels so page-level binding context is owned by DI.
+- Removed login credential seeding from `LoginPage` code-behind and moved it into `LoginViewModel` startup defaults.
+- Added `IUserNotificationService` and `UserNotificationService` so ViewModels no longer call UI dialogs directly.
+- Refactored affected ViewModels (`Login`, `Register`, `Main`, `Profile`, `RentalRequest`, `RentalList`, `UserDetail`) to use notification abstraction instead of direct `DisplayAlert` calls.
+- Added explicit model contracts in `StarterApp/Models/ItemModels.cs` and `StarterApp/Models/RentalModels.cs`.
+- Moved DTO contracts out of `IItemApiService` and `IRentalApiService` into model files and updated consumers.
+- Moved `ItemListRow` out of `ItemListViewModel` into the model layer and updated XAML `x:DataType` references.
+- Updated DI registrations in `MauiProgram.cs` for the new notification service and About/Temp page ViewModel resolution.
 
 ### 2026-04-14
 
@@ -122,6 +139,32 @@ Related evidence in this README:
 - Updated the `My Rentals` screen to use `My Listings` and `Requests` tabs, and expanded request cards to show the requester, price, and note left by the user.
 - Added owner actions to approve or deny pending requests and split approved requests into an `Active Rentals` section on the `My Rentals` screen.- Fixed the accept-request UI flow so an approved request is removed from `Pending Requests` and shown under `Active Rentals` immediately after approval.
 ## Errors Found and Resolution
+
+### 2026-04-15: MVVM separation re-implementation in restarted environment
+
+Issue 1:
+
+- After moving `ItemListRow` into the model layer, `ItemListPage.xaml` still referenced `viewmodels:ItemListRow`.
+
+Resolution:
+
+- Updated `ItemListPage.xaml` to use `models:ItemListRow` and added the `StarterApp.Models` XML namespace.
+
+Issue 2:
+
+- `RentalListPage.xaml` data templates still referenced model types from `StarterApp.Services`.
+
+Resolution:
+
+- Updated the page namespace to `StarterApp.Models` so the templates resolve the extracted DTO contracts.
+
+Issue 3:
+
+- This environment still reports existing nullable/XamlC warnings during build.
+
+Resolution:
+
+- Confirmed no new errors were introduced by this task and left unrelated historical warnings unchanged.
 
 ### 2026-04-14: Login failed after environment reload even though the code was already correct
 
@@ -230,6 +273,19 @@ Resolved state:
 - `adb reverse tcp:8080 tcp:8080` is active and the MAUI app can use `http://localhost:8080` through the emulator tunnel.
 
 ## Validation Performed
+
+### 2026-04-15 MVVM separation validation
+
+Successful checks:
+
+- `dotnet build /workspace/StarterApp/StarterApp.csproj` completed successfully.
+- Verified no `ContentPage.BindingContext` blocks remain in `StarterApp/Views` pages that use constructor-injected ViewModels.
+- Verified ViewModels no longer call `Application.Current.MainPage.DisplayAlert(...)` directly.
+- Verified item/rental DTO contracts are now defined in `StarterApp/Models` and consumed by services and ViewModels.
+
+Outcome:
+
+- Requested MVVM separation refactor has been re-applied to this restarted environment and documented in this README.
 
 ### 2026-04-14 environment-load recovery validation
 

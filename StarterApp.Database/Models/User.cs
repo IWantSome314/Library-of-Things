@@ -29,6 +29,7 @@ public class User
     public List<Item> OwnedItems { get; set; } = new List<Item>();
     public List<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
     public List<RentalRequest> RentalRequests { get; set; } = new List<RentalRequest>();
+    public List<Review> Reviews { get; set; } = new List<Review>();
     
     [NotMapped]
     public string FullName => $"{FirstName} {LastName}";

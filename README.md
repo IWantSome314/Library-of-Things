@@ -1,6 +1,6 @@
 # StarterApp Environment and JWT Integration Log
 
-Last updated: 2026-04-15
+Last updated: 2026-04-19
 
 ## Criteria Checklist Summary
 
@@ -34,7 +34,7 @@ Related evidence in this README:
 ### Basic Rental Request
 
 - [x] Submit rental request for an item
-- [ ] View list of rental requests (incoming and outgoing) in the app UI
+- [x] View list of rental requests (incoming and outgoing) in the app UI
 
 Related evidence in this README:
 - `## Item Management (JWT API Path) - Completed`
@@ -58,8 +58,8 @@ Related evidence in this README:
 
 ### Repository Pattern
 
-- [ ] `IRepository<T>` interface present
-- [ ] Repositories for Items, Rentals, and Reviews present as a formal repository layer
+- [x] `IRepository<T>` interface present
+- [x] Repositories for Items, Rentals, and Reviews present as a formal repository layer
 - [ ] Data access fully abstracted from ViewModels through the requested repository pattern
 
 Related evidence in this README:
@@ -81,6 +81,17 @@ Related evidence in this README:
 ## Changes Made
 
 ### 2026-04-15
+### 2026-04-19
+
+#### Past Rentals section on the My Rentals screen
+
+- Split the `Active Rentals` section on the `Requests` tab of the `My Rentals` screen into two sections: `Active Rentals` and `Past Rentals`.
+- Approved rentals whose `EndDate` is before the current date are now shown under `Past Rentals` instead of `Active Rentals`.
+- Added `PastRentals` (`ObservableCollection<RentalRequestSummaryDto>`) and `HasPastRentals` (`bool`) observable properties to `RentalListViewModel`.
+- Updated `LoadAsync` to filter approved rentals by `EndDate >= DateTime.UtcNow` for active and `EndDate < DateTime.UtcNow` for past.
+- Updated `MoveRequestToCorrectSection` to route newly approved requests to the correct collection based on their `EndDate`.
+- Added the `Past Rentals` `VerticalStackLayout` block to `RentalListPage.xaml` below the existing `Active Rentals` section.
+
 
 #### MVVM separation re-implementation in restarted environment
 

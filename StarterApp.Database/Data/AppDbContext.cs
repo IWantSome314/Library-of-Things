@@ -130,6 +130,7 @@ public class AppDbContext : DbContext
     public DbSet<RefreshToken> RefreshTokens { get; set; }
     public DbSet<Item> Items { get; set; }
     public DbSet<RentalRequest> RentalRequests { get; set; }
+    public DbSet<Review> Reviews { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -198,6 +199,23 @@ public class AppDbContext : DbContext
                   .HasForeignKey(r => r.RequestorUserId)
                   .OnDelete(DeleteBehavior.Cascade);
         });
+
+          modelBuilder.Entity<Review>(entity =>
+          {
+            entity.HasIndex(r => r.ItemId);
+            entity.HasIndex(r => r.ReviewerUserId);
+            entity.Property(r => r.Comment).HasMaxLength(1000);
+
+            entity.HasOne(r => r.Item)
+                .WithMany(i => i.Reviews)
+                .HasForeignKey(r => r.ItemId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(r => r.ReviewerUser)
+                .WithMany(u => u.Reviews)
+                .HasForeignKey(r => r.ReviewerUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+          });
 
         modelBuilder.Entity<RefreshToken>(entity =>
         {

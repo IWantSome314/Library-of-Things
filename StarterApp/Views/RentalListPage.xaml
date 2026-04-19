@@ -112,6 +112,49 @@
                                 </BindableLayout.ItemTemplate>
                             </VerticalStackLayout>
                         </VerticalStackLayout>
+
+                        <VerticalStackLayout Spacing="10">
+                            <Label Text="Past Rentals" FontAttributes="Bold" FontSize="18" />
+                            <Label Text="No past rentals" IsVisible="{Binding HasPastRentals, Converter={StaticResource InvertedBoolConverter}}" />
+                            <VerticalStackLayout BindableLayout.ItemsSource="{Binding PastRentals}" Spacing="10">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="models:RentalRequestSummaryDto">
+                                        <Frame Padding="10" CornerRadius="8">
+                                            <VerticalStackLayout Spacing="5">
+                                                <Label Text="{Binding ItemTitle}" FontAttributes="Bold" FontSize="16" />
+                                                <Label Text="{Binding RequestorName, StringFormat='Rented by: {0}'}" />
+                                                <Label Text="{Binding StartDate, StringFormat='Start: {0:MMM dd, yyyy}'}" />
+                                                <Label Text="{Binding EndDate, StringFormat='End: {0:MMM dd, yyyy}'}" />
+                                                <Label Text="{Binding TotalPrice, StringFormat='Price: ${0:F2}'}" />
+                                                <Label Text="{Binding Message, StringFormat='Note: {0}'}" />
+                                            </VerticalStackLayout>
+                                        </Frame>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </VerticalStackLayout>
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout Spacing="10">
+                            <Label Text="Outgoing Requests" FontAttributes="Bold" FontSize="18" />
+                            <Label Text="No outgoing requests yet" IsVisible="{Binding HasOutgoingRequests, Converter={StaticResource InvertedBoolConverter}}" />
+                            <VerticalStackLayout BindableLayout.ItemsSource="{Binding OutgoingRequests}" Spacing="10">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="models:RentalRequestSummaryDto">
+                                        <Frame Padding="10" CornerRadius="8">
+                                            <VerticalStackLayout Spacing="5">
+                                                <Label Text="{Binding ItemTitle}" FontAttributes="Bold" FontSize="16" />
+                                                <Label Text="{Binding OwnerName, StringFormat='Owner: {0}'}" />
+                                                <Label Text="{Binding StartDate, StringFormat='Start: {0:MMM dd, yyyy}'}" />
+                                                <Label Text="{Binding EndDate, StringFormat='End: {0:MMM dd, yyyy}'}" />
+                                                <Label Text="{Binding TotalPrice, StringFormat='Price: ${0:F2}'}" />
+                                                <Label Text="{Binding Message, StringFormat='Note: {0}'}" />
+                                                <Label Text="{Binding Status, StringFormat='Status: {0}'}" FontAttributes="Bold" />
+                                            </VerticalStackLayout>
+                                        </Frame>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </VerticalStackLayout>
+                        </VerticalStackLayout>
                     </VerticalStackLayout>
                 </ScrollView>
             </Grid>

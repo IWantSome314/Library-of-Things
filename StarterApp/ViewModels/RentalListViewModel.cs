@@ -24,6 +24,12 @@ public partial class RentalListViewModel : BaseViewModel
     private ObservableCollection<RentalRequestSummaryDto> activeRentals = new();
 
     [ObservableProperty]
+    private ObservableCollection<RentalRequestSummaryDto> pastRentals = new();
+
+    [ObservableProperty]
+    private ObservableCollection<RentalRequestSummaryDto> outgoingRequests = new();
+
+    [ObservableProperty]
     private bool showMyListings = true;
 
     [ObservableProperty]
@@ -34,6 +40,12 @@ public partial class RentalListViewModel : BaseViewModel
 
     [ObservableProperty]
     private bool hasActiveRentals;
+
+    [ObservableProperty]
+    private bool hasPastRentals;
+
+    [ObservableProperty]
+    private bool hasOutgoingRequests;
 
     public RentalListViewModel(
         IItemApiService itemApiService,
@@ -99,13 +111,18 @@ public partial class RentalListViewModel : BaseViewModel
                 MyListings = new ObservableCollection<ItemSummaryDto>();
                 PendingRequests = new ObservableCollection<RentalRequestSummaryDto>();
                 ActiveRentals = new ObservableCollection<RentalRequestSummaryDto>();
+                PastRentals = new ObservableCollection<RentalRequestSummaryDto>();
+                OutgoingRequests = new ObservableCollection<RentalRequestSummaryDto>();
                 HasPendingRequests = false;
                 HasActiveRentals = false;
+                HasPastRentals = false;
+                HasOutgoingRequests = false;
                 return;
             }
 
             var allItems = await _itemApiService.GetItemsAsync();
             var incoming = await _rentalApiService.GetIncomingRequestsAsync();
+            var outgoing = await _rentalApiService.GetOutgoingRequestsAsync();
 
             var ownedItems = allItems
                 .Where(item => item.OwnerUserId == currentUserId.Value)
@@ -117,16 +134,27 @@ public partial class RentalListViewModel : BaseViewModel
                 .OrderByDescending(request => request.CreatedAtUtc)
                 .ToList();
 
-            var active = incoming
+            var approvedRentals = incoming
                 .Where(request => string.Equals(request.Status, "Approved", StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(request => request.CreatedAtUtc)
+                .ToList();
+
+            var now = DateTime.UtcNow;
+            var active = approvedRentals.Where(r => r.EndDate >= now).ToList();
+            var past = approvedRentals.Where(r => r.EndDate < now).ToList();
+            var outgoingSorted = outgoing
                 .OrderByDescending(request => request.CreatedAtUtc)
                 .ToList();
 
             MyListings = new ObservableCollection<ItemSummaryDto>(ownedItems);
             PendingRequests = new ObservableCollection<RentalRequestSummaryDto>(pending);
             ActiveRentals = new ObservableCollection<RentalRequestSummaryDto>(active);
+            PastRentals = new ObservableCollection<RentalRequestSummaryDto>(past);
+            OutgoingRequests = new ObservableCollection<RentalRequestSummaryDto>(outgoingSorted);
             HasPendingRequests = pending.Count > 0;
             HasActiveRentals = active.Count > 0;
+            HasPastRentals = past.Count > 0;
+            HasOutgoingRequests = outgoingSorted.Count > 0;
         }
         catch (Exception ex)
         {
@@ -160,14 +188,24 @@ public partial class RentalListViewModel : BaseViewModel
             PendingRequests.Remove(pendingMatch);
         }
 
-        if (string.Equals(status, "Approved", StringComparison.OrdinalIgnoreCase)
-            && !ActiveRentals.Any(item => item.Id == request.Id))
+        if (string.Equals(status, "Approved", StringComparison.OrdinalIgnoreCase))
         {
-            ActiveRentals.Insert(0, request);
+            var now = DateTime.UtcNow;
+            if (request.EndDate < now)
+            {
+                if (!PastRentals.Any(item => item.Id == request.Id))
+                    PastRentals.Insert(0, request);
+            }
+            else
+            {
+                if (!ActiveRentals.Any(item => item.Id == request.Id))
+                    ActiveRentals.Insert(0, request);
+            }
         }
 
         HasPendingRequests = PendingRequests.Count > 0;
         HasActiveRentals = ActiveRentals.Count > 0;
+        HasPastRentals = PastRentals.Count > 0;
     }
 
     private async Task UpdateRequestStatusAsync(RentalRequestSummaryDto? request, string status, string successMessage)

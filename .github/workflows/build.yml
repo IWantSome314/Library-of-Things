@@ -1,0 +1,44 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Restore
+        run: dotnet restore StarterApp.sln
+
+      - name: Build
+        run: dotnet build StarterApp.sln --configuration Release --no-restore
+
+      - name: Test (if test projects exist)
+        shell: bash
+        run: |
+          set -e
+          TEST_PROJECTS=$(find . -type f \( -name "*Test*.csproj" -o -name "*Tests*.csproj" \))
+          if [ -z "$TEST_PROJECTS" ]; then
+            echo "No test projects found. Skipping tests."
+            exit 0
+          fi
+
+          echo "Running tests for:"
+          echo "$TEST_PROJECTS"
+
+          while IFS= read -r project; do
+            [ -z "$project" ] && continue
+            dotnet test "$project" --configuration Release --no-build --verbosity normal
+          done <<< "$TEST_PROJECTS"

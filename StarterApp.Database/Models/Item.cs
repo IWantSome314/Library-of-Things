@@ -40,4 +40,5 @@ public class Item
     // Navigation properties
     public User OwnerUser { get; set; } = null!;
     public List<RentalRequest> RentalRequests { get; set; } = new List<RentalRequest>();
+    public List<Review> Reviews { get; set; } = new List<Review>();
 }

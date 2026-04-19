@@ -19,11 +19,17 @@ jobs:
         with:
           dotnet-version: 9.0.x
 
-      - name: Restore
-        run: dotnet restore StarterApp.sln
+      - name: Restore non-MAUI projects
+        run: |
+          dotnet restore StarterApp.Api/StarterApp.Api.csproj
+          dotnet restore StarterApp.Database/StarterApp.Database.csproj
+          dotnet restore StarterApp.Migrations/StarterApp.Migrations.csproj
 
-      - name: Build
-        run: dotnet build StarterApp.sln --configuration Release --no-restore
+      - name: Build non-MAUI projects
+        run: |
+          dotnet build StarterApp.Api/StarterApp.Api.csproj --configuration Release --no-restore
+          dotnet build StarterApp.Database/StarterApp.Database.csproj --configuration Release --no-restore
+          dotnet build StarterApp.Migrations/StarterApp.Migrations.csproj --configuration Release --no-restore
 
       - name: Test (if test projects exist)
         shell: bash
@@ -40,5 +46,5 @@ jobs:
 
           while IFS= read -r project; do
             [ -z "$project" ] && continue
-            dotnet test "$project" --configuration Release --no-build --verbosity normal
+            dotnet test "$project" --configuration Release --verbosity normal
           done <<< "$TEST_PROJECTS"

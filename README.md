@@ -1,6 +1,32 @@
 # StarterApp Environment and JWT Integration Log
 
-Last updated: 2026-04-19
+Last updated: 2026-04-22
+
+This README is a consolidated engineering log and assessment evidence record for the StarterApp coursework submission. It preserves implementation history, validation outputs, troubleshooting notes, and presentation support material in one place.
+
+## Quick Navigation
+
+- [Criteria Checklist Summary](#criteria-checklist-summary)
+- [Current Status](#current-status)
+- [Changes Made](#changes-made)
+- [Errors Found and Resolution](#errors-found-and-resolution)
+- [Validation Performed](#validation-performed)
+- [Goal Review](#goal-review)
+- [Detailed Integration Notes](#detailed-integration-notes)
+- [Item Management (JWT API Path) - Completed](#item-management-jwt-api-path---completed)
+- [Post-Integration Troubleshooting and Fixes](#post-integration-troubleshooting-and-fixes)
+- [Demo Guide: How To Prove Endpoints](#demo-guide-how-to-prove-endpoints)
+- [Presenter Notes (Plain-English)](#presenter-notes-plain-english)
+- [Code Quality Notes (KISS, Clean Code, Smell Check)](#code-quality-notes-kiss-clean-code-smell-check)
+- [Short Demo Defense Answers](#short-demo-defense-answers)
+- [Historical Fixes](#historical-fixes)
+
+## At a Glance
+
+- Core Tier 1 architecture and feature set is implemented.
+- Repository and MVVM separation work is in place, including ViewModel data-access abstraction.
+- Coverage evidence has been improved and documented with scoped reporting.
+- CI workflow for build and test is present.
 
 ## Criteria Checklist Summary
 
@@ -46,7 +72,7 @@ Related evidence in this README:
 - [x] ViewModels for all main pages
 - [x] ObservableObject for property notification
 - [x] Commands instead of event handlers
-- [ ] Clear separation: View → ViewModel → Model is fully implemented across all modules
+- [x] Clear separation: View → ViewModel → Model is fully implemented across all modules
 
 Related evidence in this README:
 - `## Detailed Integration Notes` → `#### MAUI client JWT lifecycle updates`
@@ -60,9 +86,9 @@ Related evidence in this README:
 
 - [x] `IRepository<T>` interface present
 - [x] Repositories for Items, Rentals, and Reviews present as a formal repository layer
-- [x] xUnit test project (`StarterApp.Test`) with 17 passing tests covering all three repositories
+- [x] xUnit test project (`StarterApp.Test`) with passing repository and model tests (latest run: 28 passing tests)
 - [x] `DatabaseFixture` using in-memory EF Core provider for isolated test runs
-- [ ] Data access fully abstracted from ViewModels through the requested repository pattern
+- [x] Data access fully abstracted from ViewModels through the requested repository pattern
 
 Related evidence in this README:
 - `## Known Follow-up Work`
@@ -82,8 +108,65 @@ Related evidence in this README:
 
 ## Changes Made
 
+### 2026-04-22
+
+#### Repository hygiene update (.gitignore hardening)
+
+- Expanded `.gitignore` to reduce commit noise from generated files and local runtime artifacts.
+- Added ignore rules for .NET test and coverage outputs: `TestResults/`, `*.trx`, `*.coverage`, `*.coveragexml`, and `coverage/`.
+- Added MAUI/Xamarin generated artifact ignore for `artifacts/`.
+- Added Python cache ignores used by workspace helper scripts: `__pycache__/`, `*.py[cod]`, `.pytest_cache/`.
+- Added local runtime/debug log ignores for `build.log` and `api_logs.txt`.
+- Added Visual Studio temp folder ignore for `.vs/`.
+
+Why this was done
+
+- Keeps version control focused on source and configuration rather than machine-generated files.
+- Prevents accidental commits of volatile logs and local test output.
+- Improves CI signal quality by reducing unrelated file churn in pull requests.
+
+#### ViewModel data-access abstraction completed
+
+- Removed direct `AppDbContext` and EF Core query usage from `UserListViewModel` and `UserDetailViewModel`.
+- Added `IAdminUserService` (`StarterApp/Services/IAdminUserService.cs`) to define user-management data operations behind an abstraction.
+- Added `AdminUserService` (`StarterApp/Services/AdminUserService.cs`) to centralize user and role data reads/writes.
+- Updated `MauiProgram.cs` DI registration to inject `IAdminUserService` into ViewModels.
+
+Why this was done
+
+- Enforces clean MVVM boundaries by preventing ViewModels from owning persistence concerns.
+- Makes user management logic easier to test and easier to replace later (for example with API-backed calls).
+- Reduces coupling between UI state orchestration and EF-specific implementation details.
+
+#### Test coverage evidence improved
+
+- Added new tests for repository and model paths that were previously untested:
+  - `StarterApp.Test/Repositories/ItemRepositoryTests.cs` (added active-item filter coverage)
+  - `StarterApp.Test/Repositories/RentalRepositoryTests.cs` (added get-all and delete coverage)
+  - `StarterApp.Test/Repositories/ReviewRepositoryTests.cs` (added get-all, update, delete coverage)
+  - `StarterApp.Test/Models/UserRoleTests.cs` (covers `MarkAsDeleted`, `Restore`, `UpdateTimestamps`, and equality logic)
+- Added `StarterApp.Test/coverage.runsettings` to exclude generated artifacts (migrations, designer files, `obj`, `bin`) from the coverage report so evidence reflects assessed source code.
+- Latest scoped coverage run (with the runsettings above):
+  - Line coverage: **62.6%**
+  - Branch coverage: **22.82%**
+- Coverage command used:
+
+```bash
+dotnet test StarterApp.Test/StarterApp.Test.csproj \
+  --configuration Release \
+  --collect:"XPlat Code Coverage" \
+  --settings StarterApp.Test/coverage.runsettings
+```
+
+- Latest report path:
+  - `StarterApp.Test/TestResults/4034b0cd-6fa6-4186-afbd-7b87da2d69b4/coverage.cobertura.xml`
+
 ### 2026-04-15
 ### 2026-04-21
+
+Note:
+
+- The entries below are kept in historical order from the original log. Later 2026-04-22 entries provide updated test/coverage totals.
 
 #### xUnit test project added (StarterApp.Test)
 
@@ -170,7 +253,9 @@ Related evidence in this README:
 - Fixed rental request submissions returning HTTP 500 by normalizing request dates to UTC before EF writes them to PostgreSQL `timestamp with time zone` columns.
 - Added deterministic owner test accounts with known passwords and reassigned the seeded sample listings to those accounts so approval testing can be done by logging in as the listing owner.
 - Updated the `My Rentals` screen to use `My Listings` and `Requests` tabs, and expanded request cards to show the requester, price, and note left by the user.
-- Added owner actions to approve or deny pending requests and split approved requests into an `Active Rentals` section on the `My Rentals` screen.- Fixed the accept-request UI flow so an approved request is removed from `Pending Requests` and shown under `Active Rentals` immediately after approval.
+- Added owner actions to approve or deny pending requests and split approved requests into an `Active Rentals` section on the `My Rentals` screen.
+- Fixed the accept-request UI flow so an approved request is removed from `Pending Requests` and shown under `Active Rentals` immediately after approval.
+
 ## Errors Found and Resolution
 
 ### 2026-04-15: MVVM separation re-implementation in restarted environment
@@ -501,7 +586,7 @@ Historical note:
 
 ### Known Follow-up Work
 
-- User management view models still access `DbContext` directly and should be moved to API endpoints for full API-only architecture.
+- User management access has been abstracted behind `IAdminUserService`; a future improvement is to expose this through dedicated API endpoints for full API-only architecture.
 - Consider implementing refresh token cleanup and stronger revocation or reuse handling.
 - Add automated integration tests for token issuance and refresh behavior.
 

@@ -131,4 +131,75 @@ public class ReviewRepositoryTests : IClassFixture<DatabaseFixture>
         // Assert
         Assert.InRange(review.Rating, 1, 5);
     }
+
+    [Fact]
+    public async Task GetAllAsync_ReturnsReviews()
+    {
+        // Arrange
+        var owner = CreateUser("revowner4@test.com");
+        var reviewer = CreateUser("revuser4@test.com");
+        _fixture.Context.Users.AddRange(owner, reviewer);
+        await _fixture.Context.SaveChangesAsync();
+
+        var item = CreateItem(owner.Id);
+        _fixture.Context.Items.Add(item);
+        await _fixture.Context.SaveChangesAsync();
+
+        await _repository.AddAsync(new Review { ItemId = item.Id, ReviewerUserId = reviewer.Id, Rating = 5, Comment = "Excellent" });
+
+        // Act
+        var all = await _repository.GetAllAsync();
+
+        // Assert
+        Assert.NotEmpty(all);
+        Assert.Contains(all, r => r.ItemId == item.Id && r.ReviewerUserId == reviewer.Id);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_UpdatesComment()
+    {
+        // Arrange
+        var owner = CreateUser("revowner5@test.com");
+        var reviewer = CreateUser("revuser5@test.com");
+        _fixture.Context.Users.AddRange(owner, reviewer);
+        await _fixture.Context.SaveChangesAsync();
+
+        var item = CreateItem(owner.Id);
+        _fixture.Context.Items.Add(item);
+        await _fixture.Context.SaveChangesAsync();
+
+        var review = await _repository.AddAsync(new Review { ItemId = item.Id, ReviewerUserId = reviewer.Id, Rating = 4, Comment = "Good" });
+
+        // Act
+        review.Comment = "Very good";
+        await _repository.UpdateAsync(review);
+        var updated = await _repository.GetByIdAsync(review.Id);
+
+        // Assert
+        Assert.NotNull(updated);
+        Assert.Equal("Very good", updated!.Comment);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_RemovesReview()
+    {
+        // Arrange
+        var owner = CreateUser("revowner6@test.com");
+        var reviewer = CreateUser("revuser6@test.com");
+        _fixture.Context.Users.AddRange(owner, reviewer);
+        await _fixture.Context.SaveChangesAsync();
+
+        var item = CreateItem(owner.Id);
+        _fixture.Context.Items.Add(item);
+        await _fixture.Context.SaveChangesAsync();
+
+        var review = await _repository.AddAsync(new Review { ItemId = item.Id, ReviewerUserId = reviewer.Id, Rating = 3, Comment = "Okay" });
+
+        // Act
+        await _repository.DeleteAsync(review);
+        var deleted = await _repository.GetByIdAsync(review.Id);
+
+        // Assert
+        Assert.Null(deleted);
+    }
 }

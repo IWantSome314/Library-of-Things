@@ -160,4 +160,27 @@ public class ItemRepositoryTests : IClassFixture<DatabaseFixture>
         Assert.All(results, item => Assert.Equal(owner.Id, item.OwnerUserId));
         Assert.True(results.Count >= 2);
     }
+
+    [Fact]
+    public async Task GetActiveAsync_ReturnsOnlyActiveItems()
+    {
+        // Arrange
+        var user = CreateUser("owner7@test.com");
+        _fixture.Context.Users.Add(user);
+        await _fixture.Context.SaveChangesAsync();
+
+        var activeItem = CreateItem(user.Id, "Active Item");
+        var inactiveItem = CreateItem(user.Id, "Inactive Item");
+        inactiveItem.IsActive = false;
+
+        _fixture.Context.Items.AddRange(activeItem, inactiveItem);
+        await _fixture.Context.SaveChangesAsync();
+
+        // Act
+        var results = await _repository.GetActiveAsync();
+
+        // Assert
+        Assert.Contains(results, i => i.Id == activeItem.Id);
+        Assert.DoesNotContain(results, i => i.Id == inactiveItem.Id);
+    }
 }

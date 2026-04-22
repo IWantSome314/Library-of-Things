@@ -1,8 +1,6 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows.Input;
-using Microsoft.EntityFrameworkCore;
-using StarterApp.Database.Data;
 using StarterApp.Database.Models;
 using StarterApp.Services;
 using CommunityToolkit.Mvvm.Input;
@@ -27,8 +25,8 @@ namespace StarterApp.ViewModels;
 /// </remarks>
 public partial class UserListViewModel : INotifyPropertyChanged
 {
-    /// <summary>Database context for accessing user data</summary>
-    private readonly AppDbContext _context;
+    /// <summary>Abstraction for user administration data operations</summary>
+    private readonly IAdminUserService _adminUserService;
 
     /// <summary>Service for handling navigation between pages</summary>
     private readonly INavigationService _navigationService;
@@ -57,7 +55,7 @@ public partial class UserListViewModel : INotifyPropertyChanged
     /// <summary>
     /// Initializes a new instance of the UserListViewModel class.
     /// </summary>
-    /// <param name="context">Database context for user data access</param>
+    /// <param name="adminUserService">Service for user data access</param>
     /// <param name="navigationService">Service for page navigation</param>
     /// <param name="authenticationService">Service for authentication and authorization</param>
     /// <exception cref="ArgumentNullException">Thrown when any parameter is null</exception>
@@ -65,9 +63,9 @@ public partial class UserListViewModel : INotifyPropertyChanged
     /// The constructor automatically initiates user loading in the background
     /// and sets up role filter options based on available roles in the system.
     /// </remarks>
-    public UserListViewModel(AppDbContext context, INavigationService navigationService, IAuthenticationService authenticationService)
+    public UserListViewModel(IAdminUserService adminUserService, INavigationService navigationService, IAuthenticationService authenticationService)
     {
-        _context = context;
+        _adminUserService = adminUserService;
         _navigationService = navigationService;
         _authenticationService = authenticationService;
 
@@ -257,13 +255,7 @@ public partial class UserListViewModel : INotifyPropertyChanged
         IsLoading = true;
         try
         {
-            var users = await _context.Users
-                .Include(u => u.UserRoles)
-                .ThenInclude(ur => ur.Role)
-                .Where(u => u.IsActive)
-                .OrderBy(u => u.FirstName)
-                .ThenBy(u => u.LastName)
-                .ToListAsync();
+            var users = await _adminUserService.GetActiveUsersWithRolesAsync();
 
             var userItems = users.Select(u => new UserListItem
             {

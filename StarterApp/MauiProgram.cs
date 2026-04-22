@@ -62,6 +62,8 @@ public static class MauiProgram
             return new RentalApiService(factory.CreateClient("ApiClient"));
         });
 
+        builder.Services.AddTransient<IAdminUserService, AdminUserService>();
+
         builder.Services.AddSingleton<INavigationService, NavigationService>();
         builder.Services.AddSingleton<IUserNotificationService, UserNotificationService>();
 

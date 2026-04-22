@@ -21,6 +21,23 @@ postgres_data/
 [Oo]bj/
 [Ll]og/
 [Ll]ogs/
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+coverage/
+
+# MAUI / Xamarin generated folders
+artifacts/
+
+# Python cache artifacts (repo contains helper scripts)
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Local runtime/debug files
+build.log
+api_logs.txt
 
 # User-specific files
 *.rsuser
@@ -28,5 +45,8 @@ postgres_data/
 *.user
 *.userosscache
 *.sln.docstates
+
+# Visual Studio temporary files
+.vs/
 
 .tmp/

@@ -2,8 +2,6 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Text.RegularExpressions;
 using System.Windows.Input;
-using Microsoft.EntityFrameworkCore;
-using StarterApp.Database.Data;
 using StarterApp.Database.Models;
 using StarterApp.Services;
 using CommunityToolkit.Mvvm.Input;
@@ -27,8 +25,8 @@ public partial class UserDetailViewModel : INotifyPropertyChanged
 {
     #region Private Fields
     
-    /// <summary>Database context for data operations</summary>
-    private readonly AppDbContext _context;
+    /// <summary>Abstraction for user administration data operations</summary>
+    private readonly IAdminUserService _adminUserService;
     
     /// <summary>Navigation service for page transitions</summary>
     private readonly INavigationService _navigationService;
@@ -84,17 +82,17 @@ public partial class UserDetailViewModel : INotifyPropertyChanged
     /// <summary>
     /// Initializes a new instance of the UserDetailViewModel class.
     /// </summary>
-    /// <param name="context">The database context for data operations</param>
+    /// <param name="adminUserService">Service for user data operations</param>
     /// <param name="navigationService">The navigation service for page transitions</param>
     /// <param name="authService">The authentication service for role verification</param>
     /// <param name="notificationService">The user notification service for dialogs</param>
     public UserDetailViewModel(
-        AppDbContext context,
+        IAdminUserService adminUserService,
         INavigationService navigationService,
         IAuthenticationService authService,
         IUserNotificationService notificationService)
     {
-        _context = context;
+        _adminUserService = adminUserService;
         _navigationService = navigationService;
         _authService = authService;
         _notificationService = notificationService;
@@ -358,7 +356,7 @@ public partial class UserDetailViewModel : INotifyPropertyChanged
         try
         {
             // Load all roles first
-            var allRoles = await _context.Roles.ToListAsync();
+            var allRoles = await _adminUserService.GetAllRolesAsync();
             
             if (UserId == 0)
             {
@@ -385,10 +383,7 @@ public partial class UserDetailViewModel : INotifyPropertyChanged
             {
                 // Existing user
                 IsNewUser = false;
-                _currentUser = await _context.Users
-                    .Include(u => u.UserRoles)
-                    .ThenInclude(ur => ur.Role)
-                    .FirstOrDefaultAsync(u => u.Id == UserId);
+                _currentUser = await _adminUserService.GetUserByIdWithRolesAsync(UserId);
 
                 if (_currentUser == null)
                 {
@@ -493,8 +488,7 @@ public partial class UserDetailViewModel : INotifyPropertyChanged
     private async Task CreateUserAsync()
     {
         // Check if user already exists
-        var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == Email.Trim());
-        if (existingUser != null)
+        if (await _adminUserService.EmailExistsAsync(Email.Trim()))
         {
             throw new InvalidOperationException("User with this email already exists");
         }
@@ -516,23 +510,8 @@ public partial class UserDetailViewModel : INotifyPropertyChanged
             IsActive = IsActive
         };
 
-        _context.Users.Add(user);
-        await _context.SaveChangesAsync();
-
-        // Assign selected roles
-        var selectedRoles = AvailableRoles.Where(r => r.IsAssigned).ToList();
-        foreach (var role in selectedRoles)
-        {
-            var userRole = new UserRole(user.Id, role.Id);
-            _context.UserRoles.Add(userRole);
-        }
-
-        if (selectedRoles.Any())
-        {
-            await _context.SaveChangesAsync();
-        }
-
-        _currentUser = user;
+        var selectedRoleIds = AvailableRoles.Where(r => r.IsAssigned).Select(r => r.Id).ToList();
+        _currentUser = await _adminUserService.CreateUserAsync(user, selectedRoleIds);
         IsNewUser = false;
     }
 
@@ -546,9 +525,7 @@ public partial class UserDetailViewModel : INotifyPropertyChanged
         if (_currentUser == null) return;
 
         // Check if email is already used by another user
-        var existingUser = await _context.Users
-            .FirstOrDefaultAsync(u => u.Email == Email.Trim() && u.Id != _currentUser.Id);
-        if (existingUser != null)
+        if (await _adminUserService.EmailExistsAsync(Email.Trim(), _currentUser.Id))
         {
             throw new InvalidOperationException("Email is already used by another user");
         }
@@ -559,8 +536,7 @@ public partial class UserDetailViewModel : INotifyPropertyChanged
         _currentUser.IsActive = IsActive;
         _currentUser.UpdatedAt = DateTime.UtcNow;
 
-        _context.Users.Update(_currentUser);
-        await _context.SaveChangesAsync();
+        await _adminUserService.UpdateUserAsync(_currentUser);
     }
 
     /// <summary>
@@ -595,21 +571,7 @@ public partial class UserDetailViewModel : INotifyPropertyChanged
         IsLoading = true;
         try
         {
-            // Soft delete - mark as inactive and set deleted date
-            _currentUser.IsActive = false;
-            _currentUser.DeletedAt = DateTime.UtcNow;
-            _currentUser.UpdatedAt = DateTime.UtcNow;
-
-            // Also deactivate all user roles
-            var userRoles = await _context.UserRoles.Where(ur => ur.UserId == _currentUser.Id).ToListAsync();
-            foreach (var userRole in userRoles)
-            {
-                userRole.MarkAsDeleted();
-            }
-
-            _context.Users.Update(_currentUser);
-            _context.UserRoles.UpdateRange(userRoles);
-            await _context.SaveChangesAsync();
+            await _adminUserService.SoftDeleteUserAsync(_currentUser);
 
             await NavigateBackAsync();
         }
@@ -637,9 +599,7 @@ public partial class UserDetailViewModel : INotifyPropertyChanged
 
         try
         {
-            var userRole = new UserRole(_currentUser.Id, role.Id);
-            _context.UserRoles.Add(userRole);
-            await _context.SaveChangesAsync();
+            await _adminUserService.AddRoleAsync(_currentUser.Id, role.Id);
 
             role.IsAssigned = true;
             SuccessMessage = $"Role '{role.Name}' added successfully!";
@@ -666,20 +626,12 @@ public partial class UserDetailViewModel : INotifyPropertyChanged
 
         try
         {
-            var userRole = await _context.UserRoles
-                .FirstOrDefaultAsync(ur => ur.UserId == _currentUser.Id && ur.RoleId == role.Id && ur.IsActive);
+            await _adminUserService.RemoveRoleAsync(_currentUser.Id, role.Id);
 
-            if (userRole != null)
-            {
-                userRole.MarkAsDeleted();
-                _context.UserRoles.Update(userRole);
-                await _context.SaveChangesAsync();
-
-                role.IsAssigned = false;
-                SuccessMessage = $"Role '{role.Name}' removed successfully!";
-                await Task.Delay(1500);
-                ClearMessages();
-            }
+            role.IsAssigned = false;
+            SuccessMessage = $"Role '{role.Name}' removed successfully!";
+            await Task.Delay(1500);
+            ClearMessages();
         }
         catch (Exception ex)
         {

@@ -60,6 +60,8 @@ Related evidence in this README:
 
 - [x] `IRepository<T>` interface present
 - [x] Repositories for Items, Rentals, and Reviews present as a formal repository layer
+- [x] xUnit test project (`StarterApp.Test`) with 17 passing tests covering all three repositories
+- [x] `DatabaseFixture` using in-memory EF Core provider for isolated test runs
 - [ ] Data access fully abstracted from ViewModels through the requested repository pattern
 
 Related evidence in this README:
@@ -81,6 +83,26 @@ Related evidence in this README:
 ## Changes Made
 
 ### 2026-04-15
+### 2026-04-21
+
+#### xUnit test project added (StarterApp.Test)
+
+- Created `StarterApp.Test` xUnit project targeting `net9.0`.
+- Added project to `StarterApp.sln`.
+- Added `Moq` and `Microsoft.EntityFrameworkCore.InMemory` package references.
+- Added `DatabaseFixture` (`StarterApp.Test/Fixtures/DatabaseFixture.cs`) providing an isolated in-memory `AppDbContext` for each test class.
+- Added `ItemRepositoryTests` (6 tests): `AddAsync`, `GetByIdAsync`, `GetAllAsync`, `UpdateAsync`, `DeleteAsync`, `GetByOwnerAsync`.
+- Added `RentalRepositoryTests` (5 tests): `AddAsync`, `GetByIdAsync`, `UpdateAsync` (status change), `GetOutgoingForUserAsync`, `GetIncomingForOwnerAsync`.
+- Added `ReviewRepositoryTests` (5 tests): `AddAsync`, `GetByItemAsync`, `GetByReviewerAsync`, `GetByIdAsync` returns null, rating range validation.
+- All 17 tests pass (`dotnet test --configuration Release`).
+- Updated `StarterApp.Test.csproj` with a project reference to `StarterApp.Database`.
+
+#### GitHub Actions CI/CD workflow added
+
+- Added `.github/workflows/build.yml` to trigger automatic build on push to `main`.
+- Restores and builds `StarterApp.Api`, `StarterApp.Database`, and `StarterApp.Migrations` (non-MAUI) to avoid workload errors on GitHub runners.
+- Automatically detects and runs xUnit test projects when present.
+
 ### 2026-04-19
 
 #### Past Rentals section on the My Rentals screen

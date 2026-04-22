@@ -1,0 +1,39 @@
+Summary
+  Generated on: 4/22/2026 - 4:17:35 PM
+  Coverage date: 4/22/2026 - 4:17:21 PM
+  Parser: Cobertura
+  Assemblies: 1
+  Classes: 17
+  Files: 19
+  Line coverage: 15.3%
+  Covered lines: 222
+  Uncovered lines: 1226
+  Coverable lines: 1448
+  Total lines: 2039
+  Branch coverage: 1% (1 of 92)
+  Covered branches: 1
+  Total branches: 92
+  Method coverage: 52.5% (71 of 135)
+  Full method coverage: 51.8% (70 of 135)
+  Covered methods: 71
+  Fully covered methods: 70
+  Total methods: 135
+
+StarterApp.Database                                          15.3%
+  StarterApp.Database.Data.AppDbContext                      63.3%
+  StarterApp.Database.Data.LegacySchemaRepair                   0%
+  StarterApp.Database.Data.Repositories.ItemRepository       82.3%
+  StarterApp.Database.Data.Repositories.RentalRepository     76.1%
+  StarterApp.Database.Data.Repositories.ReviewRepository     66.6%
+  StarterApp.Database.Migrations.AddItemsAndRefreshTokens       0%
+  StarterApp.Database.Migrations.AddRentalRequests              0%
+  StarterApp.Database.Migrations.AppDbContextModelSnapshot      0%
+  StarterApp.Database.Migrations.InitialCreate                  0%
+  StarterApp.Database.Models.Item                              80%
+  StarterApp.Database.Models.RefreshToken                       0%
+  StarterApp.Database.Models.RentalRequest                   91.6%
+  StarterApp.Database.Models.Review                            75%
+  StarterApp.Database.Models.Role                               0%
+  StarterApp.Database.Models.RoleConstants                      0%
+  StarterApp.Database.Models.User                            87.5%
+  StarterApp.Database.Models.UserRole                           0%

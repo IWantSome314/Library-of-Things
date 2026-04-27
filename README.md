@@ -1,6 +1,6 @@
 # StarterApp Environment and JWT Integration Log
 
-Last updated: 2026-04-22
+Last updated: 2026-04-27
 
 This README is a consolidated engineering log and assessment evidence record for the StarterApp coursework submission. It preserves implementation history, validation outputs, troubleshooting notes, and presentation support material in one place.
 
@@ -25,6 +25,7 @@ This README is a consolidated engineering log and assessment evidence record for
 
 - Core Tier 1 architecture and feature set is implemented.
 - Repository and MVVM separation work is in place, including ViewModel data-access abstraction.
+- Rental request lifecycle is enforced by a formal state machine (`RentalStateMachine`) with actor-based transition guards.
 - Coverage evidence has been improved and documented with scoped reporting.
 - CI workflow for build and test is present.
 
@@ -86,13 +87,26 @@ Related evidence in this README:
 
 - [x] `IRepository<T>` interface present
 - [x] Repositories for Items, Rentals, and Reviews present as a formal repository layer
-- [x] xUnit test project (`StarterApp.Test`) with passing repository and model tests (latest run: 28 passing tests)
+- [x] xUnit test project (`StarterApp.Test`) with passing repository, model, and state machine tests (latest run: 49 passing tests)
 - [x] `DatabaseFixture` using in-memory EF Core provider for isolated test runs
 - [x] Data access fully abstracted from ViewModels through the requested repository pattern
 
 Related evidence in this README:
 - `## Known Follow-up Work`
 - Current implementation uses service abstractions such as item and rental API services rather than repository classes.
+
+### Rental State Machine
+
+- [x] `RentalStateMachine` static class in `StarterApp.Database/StateMachine/`
+- [x] Valid transitions: `Pending → Approved/Denied/Cancelled`, `Approved → Active/Cancelled`, `Active → Returned`
+- [x] Actor-based guards: only item owner can approve/deny; only requestor can cancel from Approved; invalid transitions return 400/403
+- [x] New API endpoints: `POST /rentals/{id}/activate`, `POST /rentals/{id}/return`
+- [x] `UpdateRentalRequestStatusAsync` updated to use `RentalStateMachine.CanTransition` and `CanTransitionAs`
+- [x] 14 dedicated state machine unit tests covering valid transitions, invalid transitions, actor rules, and terminal states
+
+Related evidence in this README:
+- `## Item Management (JWT API Path) - Completed` → `### API endpoints implemented`
+- `## Changes Made` → `### 2026-04-27`
 
 ## Current Status
 
@@ -107,6 +121,26 @@ Related evidence in this README:
 - ADB connectivity from the container to the emulator is working, including `adb devices` and `adb reverse tcp:8080 tcp:8080`.
 
 ## Changes Made
+
+### 2026-04-27
+
+#### Rental request state machine
+
+- Added `StarterApp.Database/StateMachine/RentalStateMachine.cs` — a static class defining all valid rental lifecycle transitions and actor-based permission rules.
+- Valid state flow: `Pending → Approved → Active → Returned`. Side exits: `Pending/Approved → Cancelled`, `Pending → Denied`.
+- `CanTransition(from, to)` — checks whether a transition is structurally valid.
+- `CanTransitionAs(from, to, actor)` — checks whether the given actor (Owner or Requestor) is permitted to trigger the transition.
+- `GetAllowedTransitions(from)` — returns all reachable states from a given state.
+- Updated `UpdateRentalRequestStatusAsync` in `StarterApp.Api/Program.cs` to replace the old single `if (!Pending)` guard with proper state machine validation and actor checking.
+- Added two new API endpoints: `POST /rentals/{id}/activate` and `POST /rentals/{id}/return`.
+- Added 14 unit tests in `StarterApp.Test/StateMachine/RentalStateMachineTests.cs` covering valid transitions, invalid transitions, terminal states, and actor permission rules.
+- Total passing tests: 49.
+
+Why this was done
+
+- Formalises rental lifecycle enforcement instead of relying on ad-hoc string comparisons.
+- Prevents invalid state jumps (e.g. Pending → Returned) and unauthorised transitions (e.g. requestor trying to approve their own request).
+- Demonstrates a recognisable design pattern with clear testability.
 
 ### 2026-04-22
 
@@ -589,6 +623,7 @@ Historical note:
 - User management access has been abstracted behind `IAdminUserService`; a future improvement is to expose this through dedicated API endpoints for full API-only architecture.
 - Consider implementing refresh token cleanup and stronger revocation or reuse handling.
 - Add automated integration tests for token issuance and refresh behavior.
+- MAUI client UI for rental lifecycle transitions (activate/return/cancel buttons) is not yet wired up.
 
 ## Item Management (JWT API Path) - Completed
 
@@ -608,6 +643,11 @@ The following Pass requirement is implemented using JWT-authenticated API calls:
 - `POST /rentals` - create a rental request for another user's item (requires JWT)
 - `GET /rentals/incoming` - list requests received for your items (requires JWT)
 - `GET /rentals/outgoing` - list requests you have submitted (requires JWT)
+- `POST /rentals/{id}/approve` - owner approves a pending request (requires JWT)
+- `POST /rentals/{id}/deny` - owner denies a pending request (requires JWT)
+- `POST /rentals/{id}/activate` - owner marks an approved request as active/collected (requires JWT)
+- `POST /rentals/{id}/return` - owner marks an active rental as returned (requires JWT)
+- `POST /rentals/{id}/cancel` - requestor cancels a pending or approved request (requires JWT)
 
 Files:
 

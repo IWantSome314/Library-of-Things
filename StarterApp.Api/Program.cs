@@ -7,6 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using Npgsql;
 using StarterApp.Api;
 using StarterApp.Database.Data;
+using StarterApp.Database.StateMachine;
 using StarterApp.Database.Data.Repositories;
 using StarterApp.Database.Models;
 using System.Text;
@@ -511,6 +512,16 @@ app.MapPost("/rentals/{id:int}/deny", async (int id, ClaimsPrincipal principal, 
     return await UpdateRentalRequestStatusAsync(id, principal, db, "Denied");
 }).RequireAuthorization();
 
+app.MapPost("/rentals/{id:int}/activate", async (int id, ClaimsPrincipal principal, AppDbContext db) =>
+{
+    return await UpdateRentalRequestStatusAsync(id, principal, db, "Active");
+}).RequireAuthorization();
+
+app.MapPost("/rentals/{id:int}/return", async (int id, ClaimsPrincipal principal, AppDbContext db) =>
+{
+    return await UpdateRentalRequestStatusAsync(id, principal, db, "Returned");
+}).RequireAuthorization();
+
 app.Run();
 
 static int? GetUserId(ClaimsPrincipal principal)
@@ -563,14 +574,23 @@ static async Task<IResult> UpdateRentalRequestStatusAsync(
         return Results.NotFound(new { message = "Rental request not found." });
     }
 
-    if (rental.Item.OwnerUserId != userId.Value)
+    var isOwner = rental.Item.OwnerUserId == userId.Value;
+    var isRequestor = rental.RequestorUserId == userId.Value;
+
+    if (!isOwner && !isRequestor)
     {
         return Results.Forbid();
     }
 
-    if (!string.Equals(rental.Status, "Pending", StringComparison.OrdinalIgnoreCase))
+    if (!RentalStateMachine.CanTransition(rental.Status, nextStatus))
     {
-        return Results.BadRequest(new { message = "Only pending requests can be updated." });
+        return Results.BadRequest(new { message = $"Cannot transition from '{rental.Status}' to '{nextStatus}'." });
+    }
+
+    var actor = isOwner ? RentalStateMachine.Actor.Owner : RentalStateMachine.Actor.Requestor;
+    if (!RentalStateMachine.CanTransitionAs(rental.Status, nextStatus, actor))
+    {
+        return Results.Forbid();
     }
 
     rental.Status = nextStatus;

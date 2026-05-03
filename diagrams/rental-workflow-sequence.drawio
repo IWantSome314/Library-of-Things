@@ -1,0 +1,64 @@
+<mxfile host="app.diagrams.net" modified="2026-05-02T12:05:00.000Z" version="24.7.17" type="device">
+  <diagram id="rental-sequence-clean" name="Rental Workflow Sequence">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1200" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <mxCell id="title" value="Rental Workflow - Sequence Diagram (v3 - May 2)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=20;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="20" width="560" height="30" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="p1" value="Requestor App" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=13;align=center;" vertex="1" parent="1">
+          <mxGeometry x="70" y="80" width="170" height="56" as="geometry"/>
+        </mxCell>
+        <mxCell id="p2" value="Owner App" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=13;align=center;" vertex="1" parent="1">
+          <mxGeometry x="290" y="80" width="170" height="56" as="geometry"/>
+        </mxCell>
+        <mxCell id="p3" value="API (/rentals)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=13;align=center;" vertex="1" parent="1">
+          <mxGeometry x="530" y="80" width="200" height="56" as="geometry"/>
+        </mxCell>
+        <mxCell id="p4" value="RentalStateMachine" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=13;align=center;" vertex="1" parent="1">
+          <mxGeometry x="800" y="80" width="200" height="56" as="geometry"/>
+        </mxCell>
+        <mxCell id="p5" value="Database" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;fontSize=13;align=center;" vertex="1" parent="1">
+          <mxGeometry x="1080" y="80" width="170" height="56" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="l1" style="shape=line;strokeWidth=2;html=1;" vertex="1" parent="1"><mxGeometry x="155" y="150" width="1" height="910" as="geometry"/></mxCell>
+        <mxCell id="l2" style="shape=line;strokeWidth=2;html=1;" vertex="1" parent="1"><mxGeometry x="375" y="150" width="1" height="910" as="geometry"/></mxCell>
+        <mxCell id="l3" style="shape=line;strokeWidth=2;html=1;" vertex="1" parent="1"><mxGeometry x="630" y="150" width="1" height="910" as="geometry"/></mxCell>
+        <mxCell id="l4" style="shape=line;strokeWidth=2;html=1;" vertex="1" parent="1"><mxGeometry x="900" y="150" width="1" height="910" as="geometry"/></mxCell>
+        <mxCell id="l5" style="shape=line;strokeWidth=2;html=1;" vertex="1" parent="1"><mxGeometry x="1165" y="150" width="1" height="910" as="geometry"/></mxCell>
+
+        <mxCell id="m1" value="1. POST /rentals (itemId, dates, message)" style="endArrow=block;html=1;strokeWidth=2;fontSize=12;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="155" y="200" as="sourcePoint"/><mxPoint x="630" y="200" as="targetPoint"/></mxGeometry></mxCell>
+        <mxCell id="m2" value="2. Validate auth + dates + ownership" style="endArrow=block;html=1;strokeWidth=2;fontSize=12;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="630" y="250" as="sourcePoint"/><mxPoint x="1165" y="250" as="targetPoint"/></mxGeometry></mxCell>
+        <mxCell id="m3" value="3. Insert rental_request (Status=Pending)" style="endArrow=block;html=1;strokeWidth=2;fontSize=12;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="630" y="300" as="sourcePoint"/><mxPoint x="1165" y="300" as="targetPoint"/></mxGeometry></mxCell>
+        <mxCell id="m4" value="4. 201 Created (rentalId)" style="dashed=1;endArrow=block;html=1;strokeWidth=2;fontSize=12;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="630" y="350" as="sourcePoint"/><mxPoint x="155" y="350" as="targetPoint"/></mxGeometry></mxCell>
+
+        <mxCell id="s1" value="State: Pending" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=12;align=center;" vertex="1" parent="1"><mxGeometry x="560" y="385" width="140" height="36" as="geometry"/></mxCell>
+
+        <mxCell id="m5" value="5. GET /rentals/incoming" style="endArrow=block;html=1;strokeWidth=2;fontSize=12;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="375" y="470" as="sourcePoint"/><mxPoint x="630" y="470" as="targetPoint"/></mxGeometry></mxCell>
+        <mxCell id="m6" value="6. Query incoming rentals" style="endArrow=block;html=1;strokeWidth=2;fontSize=12;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="630" y="520" as="sourcePoint"/><mxPoint x="1165" y="520" as="targetPoint"/></mxGeometry></mxCell>
+
+        <mxCell id="m7" value="7. POST /rentals/{id}/approve" style="endArrow=block;html=1;strokeWidth=2;fontSize=12;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="375" y="590" as="sourcePoint"/><mxPoint x="630" y="590" as="targetPoint"/></mxGeometry></mxCell>
+        <mxCell id="m8" value="8. Validate CanTransition + CanTransitionAs" style="endArrow=block;html=1;strokeWidth=2;fontSize=12;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="630" y="640" as="sourcePoint"/><mxPoint x="900" y="640" as="targetPoint"/></mxGeometry></mxCell>
+        <mxCell id="m9" value="9. Update status = Approved" style="endArrow=block;html=1;strokeWidth=2;fontSize=12;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="630" y="690" as="sourcePoint"/><mxPoint x="1165" y="690" as="targetPoint"/></mxGeometry></mxCell>
+
+        <mxCell id="s2" value="State: Approved" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=12;align=center;" vertex="1" parent="1"><mxGeometry x="555" y="725" width="150" height="36" as="geometry"/></mxCell>
+
+        <mxCell id="m10" value="10. POST /rentals/{id}/activate" style="endArrow=block;html=1;strokeWidth=2;fontSize=12;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="375" y="810" as="sourcePoint"/><mxPoint x="630" y="810" as="targetPoint"/></mxGeometry></mxCell>
+        <mxCell id="m11" value="11. Validate transition" style="endArrow=block;html=1;strokeWidth=2;fontSize=12;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="630" y="860" as="sourcePoint"/><mxPoint x="900" y="860" as="targetPoint"/></mxGeometry></mxCell>
+        <mxCell id="m12" value="12. Update status = Active" style="endArrow=block;html=1;strokeWidth=2;fontSize=12;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="630" y="910" as="sourcePoint"/><mxPoint x="1165" y="910" as="targetPoint"/></mxGeometry></mxCell>
+
+        <mxCell id="s3" value="State: Active" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=12;align=center;" vertex="1" parent="1"><mxGeometry x="565" y="945" width="130" height="36" as="geometry"/></mxCell>
+
+        <mxCell id="m13" value="13. POST /rentals/{id}/return" style="endArrow=block;html=1;strokeWidth=2;fontSize=12;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="375" y="1020" as="sourcePoint"/><mxPoint x="630" y="1020" as="targetPoint"/></mxGeometry></mxCell>
+        <mxCell id="m14" value="14. Validate transition" style="endArrow=block;html=1;strokeWidth=2;fontSize=12;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="630" y="1070" as="sourcePoint"/><mxPoint x="900" y="1070" as="targetPoint"/></mxGeometry></mxCell>
+        <mxCell id="m15" value="15. Update status = Returned" style="endArrow=block;html=1;strokeWidth=2;fontSize=12;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="630" y="1120" as="sourcePoint"/><mxPoint x="1165" y="1120" as="targetPoint"/></mxGeometry></mxCell>
+
+        <mxCell id="s4" value="State: Returned (terminal)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;fontSize=12;align=center;" vertex="1" parent="1"><mxGeometry x="525" y="1155" width="210" height="36" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

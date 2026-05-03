@@ -8,6 +8,9 @@ using System.Net.Http.Headers;
 
 namespace StarterApp;
 
+// File purpose:
+// Configures dependency injection, HTTP clients, and page/viewmodel registrations for the MAUI app.
+// Core idea: keep authentication-specific HTTP calls separate from normal API calls to avoid refresh loops.
 public static class MauiProgram
 {
     public static MauiApp CreateMauiApp()
@@ -21,6 +24,7 @@ public static class MauiProgram
                 fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
             });
 
+        // Local DbContext is still registered for internal data access paths used by admin/user flows.
         builder.Services.AddDbContext<AppDbContext>();
 
         // Register the HTTP Interceptor that will automatically attach and refresh JWTs 
@@ -44,6 +48,7 @@ public static class MauiProgram
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }).AddHttpMessageHandler<AuthenticationInterceptor>();
 
+        // Service registrations are interface-first so ViewModels depend on abstractions, not concrete classes.
         builder.Services.AddSingleton<IAuthenticationService>(sp => 
         {
             var factory = sp.GetRequiredService<IHttpClientFactory>();
@@ -67,10 +72,12 @@ public static class MauiProgram
         builder.Services.AddSingleton<INavigationService, NavigationService>();
         builder.Services.AddSingleton<IUserNotificationService, UserNotificationService>();
 
+        // App-level shell is singleton because it survives for the lifetime of the app.
         builder.Services.AddSingleton<AppShellViewModel>();
         builder.Services.AddSingleton<AppShell>();
         builder.Services.AddSingleton<App>();
 
+        // Pages and most ViewModels are transient so each navigation gets a fresh instance/state.
         builder.Services.AddTransient<AboutViewModel>();
         builder.Services.AddTransient<AboutPage>();
         builder.Services.AddTransient<MainViewModel>();

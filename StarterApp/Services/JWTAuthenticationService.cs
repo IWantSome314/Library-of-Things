@@ -8,6 +8,9 @@ using StarterApp.Database.Models;
 
 namespace StarterApp.Services;
 
+// File purpose:
+// Implements app authentication using JWT access/refresh tokens.
+// Core responsibilities: login/register, token persistence, auto-refresh, and exposing current user/roles.
 public class JWTAuthenticationService : IAuthenticationService
 {
     private readonly HttpClient _httpClient;
@@ -64,6 +67,7 @@ public class JWTAuthenticationService : IAuthenticationService
                 return new AuthenticationResult(false, "Invalid token payload received");
             }
 
+            // Persist tokens first, then derive user/roles from JWT claims for app state.
             await SetTokensAsync(tokenResponse.AccessToken, tokenResponse.RefreshToken, tokenResponse.ExpiresAtUtc);
             HydrateUserFromJwt(_accessToken!);
 
@@ -185,6 +189,7 @@ public class JWTAuthenticationService : IAuthenticationService
 
         _isInitialized = true;
 
+        // Load persisted auth state once on app startup/resume.
         _accessToken = await SecureStorage.Default.GetAsync(AccessTokenStorageKey);
         _refreshToken = await SecureStorage.Default.GetAsync(RefreshTokenStorageKey);
         var expiry = await SecureStorage.Default.GetAsync(TokenExpiryStorageKey);
@@ -205,6 +210,7 @@ public class JWTAuthenticationService : IAuthenticationService
 
         if (_tokenExpirationUtc <= DateTime.UtcNow)
         {
+            // Expired token path: attempt silent refresh to avoid forcing immediate re-login.
             var refreshed = await RefreshAccessTokenAsync();
             if (!refreshed)
             {
@@ -259,6 +265,7 @@ public class JWTAuthenticationService : IAuthenticationService
             return false;
         }
 
+        // A single lock prevents multiple parallel requests from racing token refresh calls.
         await _refreshLock.WaitAsync();
         try
         {
@@ -312,6 +319,7 @@ public class JWTAuthenticationService : IAuthenticationService
 
     private void HydrateUserFromJwt(string accessToken)
     {
+        // JWT claims are treated as source-of-truth for current identity and role checks in the UI.
         var jwt = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
 
         _currentUserRoles = jwt.Claims

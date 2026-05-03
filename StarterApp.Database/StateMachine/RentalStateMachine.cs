@@ -1,8 +1,11 @@
 namespace StarterApp.Database.StateMachine;
 
+// File purpose:
+// Defines allowed rental status transitions and which actor is allowed to trigger each transition.
+// This gives one source-of-truth for workflow enforcement.
 public static class RentalStateMachine
 {
-    // Defines which transitions are valid and who can trigger them
+    // Defines which transitions are valid and who can trigger them.
     public enum Actor { Owner, Requestor }
 
     private static readonly Dictionary<string, (string[] Targets, Actor[] AllowedActors)> _transitions = new()
@@ -22,6 +25,7 @@ public static class RentalStateMachine
 
     public static bool CanTransitionAs(string from, string to, Actor actor)
     {
+        // Actor checks run after structural transition checks to prevent unauthorized actions.
         if (!_transitions.TryGetValue(from, out var entry))
             return false;
 

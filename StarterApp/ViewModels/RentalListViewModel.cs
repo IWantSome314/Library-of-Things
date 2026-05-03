@@ -6,6 +6,9 @@ using StarterApp.Services;
 
 namespace StarterApp.ViewModels;
 
+// File purpose:
+// Builds the owner/requestor rental dashboard: listings, pending requests, active/past rentals,
+// and outgoing requests, with approve/deny actions.
 public partial class RentalListViewModel : BaseViewModel
 {
     private readonly IItemApiService _itemApiService;
@@ -120,6 +123,7 @@ public partial class RentalListViewModel : BaseViewModel
                 return;
             }
 
+            // Pull all required datasets first, then derive UI sections in-memory.
             var allItems = await _itemApiService.GetItemsAsync();
             var incoming = await _rentalApiService.GetIncomingRequestsAsync();
             var outgoing = await _rentalApiService.GetOutgoingRequestsAsync();
@@ -139,6 +143,7 @@ public partial class RentalListViewModel : BaseViewModel
                 .OrderByDescending(request => request.CreatedAtUtc)
                 .ToList();
 
+            // "Active" vs "Past" is currently determined from end date once approved.
             var now = DateTime.UtcNow;
             var active = approvedRentals.Where(r => r.EndDate >= now).ToList();
             var past = approvedRentals.Where(r => r.EndDate < now).ToList();
@@ -180,6 +185,7 @@ public partial class RentalListViewModel : BaseViewModel
 
     private void MoveRequestToCorrectSection(RentalRequestSummaryDto request, string status)
     {
+        // Optimistic UI move keeps the screen responsive before full refresh completes.
         request.Status = status;
 
         var pendingMatch = PendingRequests.FirstOrDefault(item => item.Id == request.Id);
@@ -220,6 +226,7 @@ public partial class RentalListViewModel : BaseViewModel
             IsBusy = true;
             ClearError();
 
+            // Server remains source-of-truth for transition validity and authorization.
             await _rentalApiService.UpdateRentalRequestStatusAsync(request.Id, status);
             MoveRequestToCorrectSection(request, status);
 

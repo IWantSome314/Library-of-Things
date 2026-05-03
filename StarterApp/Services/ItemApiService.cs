@@ -5,6 +5,9 @@ using StarterApp.Models;
 
 namespace StarterApp.Services;
 
+// File purpose:
+// Thin API client for item endpoints. It translates HTTP failures into clear domain-level messages
+// so ViewModels can show understandable feedback without handling raw status codes.
 public class ItemApiService : IItemApiService
 {
     private readonly HttpClient _httpClient;
@@ -35,6 +38,7 @@ public class ItemApiService : IItemApiService
     public async Task<int> CreateItemAsync(UpsertItemDto request, CancellationToken cancellationToken = default)
     {
         using var response = await _httpClient.PostAsJsonAsync("/items", request, cancellationToken);
+        // Create returns 201 + payload; this helper validates and extracts the new item ID.
         return await ReadCreateResponseAsync(response);
     }
 
@@ -65,6 +69,7 @@ public class ItemApiService : IItemApiService
             return;
         }
 
+        // Authentication/authorization errors are mapped to user-friendly text used across the UI.
         if (response.StatusCode == HttpStatusCode.Unauthorized || response.StatusCode == HttpStatusCode.Forbidden)
         {
             throw new InvalidOperationException("You must be logged in and authorized to perform this action.");

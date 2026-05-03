@@ -5,6 +5,9 @@ using StarterApp.Services;
 
 namespace StarterApp.ViewModels;
 
+// File purpose:
+// Drives the item listing screen: loads items, applies browse/my-listings filters,
+// supports searching, and handles navigation to detail/request flows.
 public partial class ItemListViewModel : BaseViewModel
 {
     private readonly IItemApiService _itemApiService;
@@ -123,6 +126,7 @@ public partial class ItemListViewModel : BaseViewModel
 
             await _authService.InitializeAsync();
 
+            // Keep the full dataset in memory so UI filtering is fast and does not re-hit the API.
             _allItems = await _itemApiService.GetItemsAsync();
             ApplyFilters();
         }
@@ -138,6 +142,7 @@ public partial class ItemListViewModel : BaseViewModel
 
     private void ApplyFilters()
     {
+        // Filtering runs in two stages: ownership view toggle, then free-text search.
         var filtered = _allItems.AsEnumerable();
         var currentUserId = _authService.CurrentUser?.Id;
 
@@ -158,6 +163,7 @@ public partial class ItemListViewModel : BaseViewModel
         }
 
         Items = filtered
+            // Project DTOs to UI rows so view concerns (like CanRequest) stay out of API models.
             .Select(i => new ItemListRow
             {
                 Id = i.Id,

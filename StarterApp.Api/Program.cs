@@ -12,8 +12,12 @@ using StarterApp.Database.Data.Repositories;
 using StarterApp.Database.Models;
 using System.Text;
 
+// File purpose:
+// Main minimal API composition root. It wires authentication, persistence, and endpoint routes
+// for auth, items, and rental workflow operations.
 var builder = WebApplication.CreateBuilder(args);
 
+// Configuration + DI registrations.
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
 
 builder.Services.AddDbContext<AppDbContext>();
@@ -51,6 +55,7 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+// Startup bootstrap: migrate schema and ensure baseline seed data for development/demo runs.
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -67,6 +72,7 @@ app.UseAuthorization();
 
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
 
+// Auth endpoints: login/register/refresh/current-user/password.
 app.MapPost("/auth/token", async (
     AppDbContext db,
     ITokenService tokenService,
@@ -259,6 +265,7 @@ app.MapPost("/auth/change-password", async (
     return Results.Ok(new { message = "Password updated." });
 }).RequireAuthorization();
 
+// Item endpoints: browse, detail, create, owner-only update.
 app.MapGet("/items", async (AppDbContext db) =>
 {
     var items = await db.Items
@@ -378,6 +385,7 @@ app.MapPut("/items/{id:int}", async (int id, ClaimsPrincipal principal, AppDbCon
     return Results.Ok(new { message = "Item updated." });
 }).RequireAuthorization();
 
+// Rental endpoints: request creation, inbox/outbox, and owner/requestor actions.
 app.MapPost("/rentals", async (ClaimsPrincipal principal, AppDbContext db, CreateRentalRequestDto request) =>
 {
     if (!MiniValidator.TryValidate(request, out var errors))
@@ -524,6 +532,7 @@ app.MapPost("/rentals/{id:int}/return", async (int id, ClaimsPrincipal principal
 
 app.Run();
 
+// Helper: normalizes user id extraction from JWT claims across all protected endpoints.
 static int? GetUserId(ClaimsPrincipal principal)
 {
     var userIdClaim = principal.FindFirstValue(ClaimTypes.NameIdentifier)
@@ -540,6 +549,7 @@ static async Task SaveRefreshTokenAsync(
     string rawRefreshToken,
     int refreshTokenDays)
 {
+    // Refresh tokens are stored hashed so leaked DB values cannot be replayed directly.
     var refresh = new RefreshToken
     {
         UserId = userId,
@@ -559,6 +569,7 @@ static async Task<IResult> UpdateRentalRequestStatusAsync(
     AppDbContext db,
     string nextStatus)
 {
+    // Centralized transition rules ensure every status endpoint enforces the same workflow policy.
     var userId = GetUserId(principal);
     if (userId is null)
     {
@@ -607,6 +618,7 @@ static async Task<IResult> UpdateRentalRequestStatusAsync(
 
 static async Task EnsureDefaultRolesAsync(AppDbContext db)
 {
+    // Seed idempotently: only run if the roles table is empty.
     if (await db.Roles.AnyAsync())
     {
         return;
@@ -625,6 +637,7 @@ static async Task EnsureDefaultRolesAsync(AppDbContext db)
 
 static async Task ApplyMigrationsWithRecoveryAsync(AppDbContext db)
 {
+    // Retries handle startup races where Postgres is reachable but not yet fully ready for migrations.
     const int maxAttempts = 10;
     var delay = TimeSpan.FromSeconds(2);
 
@@ -654,6 +667,7 @@ static async Task ApplyMigrationsWithRecoveryAsync(AppDbContext db)
 
 static async Task EnsureMockDataAsync(AppDbContext db)
 {
+    // Keeps local/demo environments populated with predictable sample accounts and listings.
     var mainOwner = await EnsureTestUserAsync(db, "James", "Owner", "james@email.com", "Password123!");
     var secondaryOwner = await EnsureTestUserAsync(db, "John", "Owner", "john@email.com", "Password123!");
     var thirdOwner = await EnsureTestUserAsync(db, "Ross", "Owner", "ross@email.com", "Password123!");

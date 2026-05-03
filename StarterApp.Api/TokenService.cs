@@ -8,6 +8,9 @@ using StarterApp.Database.Models;
 
 namespace StarterApp.Api;
 
+// File purpose:
+// Creates signed JWT access tokens and secure random refresh tokens.
+// Also provides deterministic hashing for refresh-token storage/lookup.
 public interface ITokenService
 {
     TokenResponse CreateTokenPair(User user, IReadOnlyCollection<string> roles);
@@ -46,6 +49,7 @@ public sealed class TokenService : ITokenService
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString("N"))
         };
 
+        // Role claims drive authorization checks in API endpoints and client UI role checks.
         claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
 
         var jwt = new JwtSecurityToken(
@@ -58,6 +62,7 @@ public sealed class TokenService : ITokenService
 
         var accessToken = new JwtSecurityTokenHandler().WriteToken(jwt);
 
+        // 64 random bytes provide a high-entropy refresh token value.
         Span<byte> buffer = stackalloc byte[64];
         RandomNumberGenerator.Fill(buffer);
         var refreshToken = Convert.ToBase64String(buffer);

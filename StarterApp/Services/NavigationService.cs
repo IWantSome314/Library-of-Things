@@ -1,5 +1,8 @@
 namespace StarterApp.Services;
 
+// File purpose:
+// Wrapper over MAUI Shell navigation so ViewModels can navigate via abstraction.
+// This keeps UI flow testable and avoids direct Shell calls inside ViewModels.
 public class NavigationService : INavigationService
 {
     public async Task NavigateToAsync(string route)

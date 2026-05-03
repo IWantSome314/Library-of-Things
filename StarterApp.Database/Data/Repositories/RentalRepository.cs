@@ -3,6 +3,9 @@ using StarterApp.Database.Models;
 
 namespace StarterApp.Database.Data.Repositories;
 
+// File purpose:
+// Repository implementation for rental requests.
+// It centralizes query shapes (includes/order/filtering) used by API and service layers.
 public class RentalRepository : IRentalRepository
 {
     private readonly AppDbContext _dbContext;
@@ -52,6 +55,7 @@ public class RentalRepository : IRentalRepository
 
     public async Task<List<RentalRequest>> GetIncomingForOwnerAsync(int ownerUserId, CancellationToken cancellationToken = default)
     {
+        // Incoming = requests against items owned by the current user.
         return await _dbContext.RentalRequests
             .Include(r => r.Item)
             .ThenInclude(i => i.OwnerUser)
@@ -63,6 +67,7 @@ public class RentalRepository : IRentalRepository
 
     public async Task<List<RentalRequest>> GetOutgoingForUserAsync(int requestorUserId, CancellationToken cancellationToken = default)
     {
+        // Outgoing = requests created by the current user.
         return await _dbContext.RentalRequests
             .Include(r => r.Item)
             .ThenInclude(i => i.OwnerUser)

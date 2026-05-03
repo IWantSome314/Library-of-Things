@@ -3,6 +3,8 @@ using System.Net.Http.Headers;
 
 namespace StarterApp.Services;
 
+// File purpose:
+// Central HTTP pipeline hook that injects bearer tokens and retries once after a refresh on 401.
 /// <summary>
 /// A DelegatingHandler (HTTP Interceptor) that sits in the pipeline of outgoing API requests.
 /// It automatically injects the active JWT token into the headers, and gracefully forces 

@@ -1,5 +1,61 @@
 # StarterApp Environment and JWT Integration Log
 
+## Project Overview
+
+StarterApp is a .NET MAUI rental platform coursework project with a supporting ASP.NET Core API, EF Core database layer, migrations project, and xUnit test suite. The implementation uses MVVM in the client, repository abstractions in the data layer, and a rental lifecycle state machine for workflow integrity.
+
+## Architecture Overview
+
+The solution is organised into these main components:
+
+- StarterApp: MAUI client (Views, ViewModels, Services)
+- StarterApp.Api: API endpoints, JWT auth, and rental workflow endpoints
+- StarterApp.Database: DbContext, entities, repository implementations, state machine
+- StarterApp.Migrations: EF Core migrations entry point
+- StarterApp.Test: xUnit unit/integration tests with DatabaseFixture and coverage collection
+
+Architecture diagrams are available in [diagrams/database-schema.drawio](diagrams/database-schema.drawio) and [diagrams/rental-workflow-sequence-v4.drawio](diagrams/rental-workflow-sequence-v4.drawio).
+
+## How To Run The Application
+
+1. Start infrastructure and API from the repository root:
+
+```bash
+docker compose up -d
+```
+
+2. Ensure the API runtime helper is active (dev container/local shell):
+
+```bash
+bash setup/ensure-dev-runtime.sh --api-only
+```
+
+3. Run the MAUI Android target:
+
+```bash
+cd StarterApp
+dotnet build -f net9.0-android -t:Run
+```
+
+## How To Run Tests
+
+Run all automated tests from the repository root:
+
+```bash
+dotnet test StarterApp.Test --logger "console;verbosity=minimal"
+```
+
+Generate coverage report (Cobertura format):
+
+```bash
+dotnet test StarterApp.Test/StarterApp.Test.csproj --collect:"XPlat Code Coverage" --settings StarterApp.Test/coverage.runsettings
+```
+
+## API Endpoint Documentation
+
+- Local Swagger UI: [http://localhost:8080/swagger](http://localhost:8080/swagger)
+- API source entry point: [StarterApp.Api/Program.cs](StarterApp.Api/Program.cs)
+
 Last updated: 2026-04-27
 
 This README is a consolidated engineering log and assessment evidence record for the StarterApp coursework submission. It preserves implementation history, validation outputs, troubleshooting notes, and presentation support material in one place.

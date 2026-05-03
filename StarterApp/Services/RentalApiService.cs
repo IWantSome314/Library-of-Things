@@ -5,6 +5,9 @@ using StarterApp.Models;
 
 namespace StarterApp.Services;
 
+// File purpose:
+// Encapsulates rental-related API calls (create request, list incoming/outgoing, approve/deny).
+// Keeps endpoint path logic out of ViewModels.
 public class RentalApiService : IRentalApiService
 {
     private readonly HttpClient _httpClient;
@@ -47,6 +50,7 @@ public class RentalApiService : IRentalApiService
 
     public async Task UpdateRentalRequestStatusAsync(int rentalRequestId, string status, CancellationToken cancellationToken = default)
     {
+        // UI sends semantic status values; this maps them to explicit command endpoints.
         var normalizedStatus = status.Trim().ToLowerInvariant();
         var path = normalizedStatus switch
         {

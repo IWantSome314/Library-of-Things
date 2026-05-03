@@ -5,6 +5,8 @@ using StarterApp.Services;
 
 namespace StarterApp.ViewModels;
 
+// File purpose:
+// Backs the rental request form. Validates dates, submits the request, and handles user feedback.
 [QueryProperty(nameof(ItemId), "itemId")]
 [QueryProperty(nameof(ItemTitle), "itemTitle")]
 public partial class RentalRequestViewModel : BaseViewModel
@@ -44,6 +46,7 @@ public partial class RentalRequestViewModel : BaseViewModel
     {
         if (IsBusy) return;
 
+        // Basic guard to avoid invalid rental durations being sent to the API.
         if (StartDate >= EndDate)
         {
             SetError("End date must be after start date.");
@@ -60,6 +63,7 @@ public partial class RentalRequestViewModel : BaseViewModel
                 ItemId = ItemId,
                 StartDate = StartDate,
                 EndDate = EndDate,
+                // Keep the payload clean and avoid accidental whitespace-only messages.
                 Message = Message.Trim()
             };
 

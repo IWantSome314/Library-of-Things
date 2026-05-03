@@ -35,6 +35,7 @@ jobs:
         shell: bash
         run: |
           set -e
+          mkdir -p TestResults
           TEST_PROJECTS=$(find . -type f \( -name "*Test*.csproj" -o -name "*Tests*.csproj" \))
           if [ -z "$TEST_PROJECTS" ]; then
             echo "No test projects found. Skipping tests."
@@ -46,5 +47,14 @@ jobs:
 
           while IFS= read -r project; do
             [ -z "$project" ] && continue
-            dotnet test "$project" --configuration Release --verbosity normal
+            project_name=$(basename "$project" .csproj)
+            dotnet test "$project" --configuration Release --verbosity normal --logger "trx;LogFileName=${project_name}.trx" --results-directory TestResults
           done <<< "$TEST_PROJECTS"
+
+      - name: Upload test results artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-trx
+          path: TestResults/**/*.trx
+          if-no-files-found: warn

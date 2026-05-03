@@ -4,6 +4,9 @@ using StarterApp.Database.Models;
 
 namespace StarterApp.Services;
 
+// File purpose:
+// Provides admin-oriented user and role management operations against AppDbContext.
+// ViewModels call this service instead of writing EF queries directly.
 public sealed class AdminUserService : IAdminUserService
 {
     private readonly AppDbContext _context;
@@ -41,6 +44,7 @@ public sealed class AdminUserService : IAdminUserService
 
     public async Task<bool> EmailExistsAsync(string email, int? excludeUserId = null)
     {
+        // Exclude current record during edit operations so unchanged emails are allowed.
         var normalizedEmail = email.Trim();
         var query = _context.Users.AsQueryable();
 
@@ -75,6 +79,7 @@ public sealed class AdminUserService : IAdminUserService
 
     public async Task SoftDeleteUserAsync(User user)
     {
+        // Soft-delete keeps audit history and preserves relational integrity.
         user.IsActive = false;
         user.DeletedAt = DateTime.UtcNow;
         user.UpdatedAt = DateTime.UtcNow;
@@ -95,6 +100,7 @@ public sealed class AdminUserService : IAdminUserService
 
     public async Task AddRoleAsync(int userId, int roleId)
     {
+        // Reactivate previously deleted user-role links instead of creating duplicates.
         var existingRole = await _context.UserRoles
             .FirstOrDefaultAsync(ur => ur.UserId == userId && ur.RoleId == roleId);
 

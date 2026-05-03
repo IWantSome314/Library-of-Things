@@ -7,6 +7,9 @@ using StarterApp.Database.Models;
 
 namespace StarterApp.Database.Data;
 
+// File purpose:
+// EF Core DbContext for the shared data layer.
+// Core responsibilities: resolve a reachable Postgres connection string and define entity mappings.
 public class AppDbContext : DbContext
 {
 
@@ -19,12 +22,14 @@ public class AppDbContext : DbContext
     {
         if (optionsBuilder.IsConfigured) return;
 
+        // Fallback strategy allows the same binary to run in host, container, and Android emulator contexts.
         var connectionString = ResolveConnectionString();
         optionsBuilder.UseNpgsql(connectionString);
     }
 
     private static string ResolveConnectionString()
     {
+        // Try environment-specified connection first, then known host permutations.
         var envConnectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING");
         if (!string.IsNullOrWhiteSpace(envConnectionString) && CanReachPostgres(envConnectionString))
         {
@@ -136,6 +141,7 @@ public class AppDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
+        // Entity configuration keeps constraints/indexes explicit and close to the model contract.
         // Configure User entity
         modelBuilder.Entity<User>(entity =>
         {

@@ -7,6 +7,9 @@ using System.Collections.ObjectModel;
 
 namespace StarterApp.ViewModels;
 
+// File purpose:
+// Handles item create/edit/view behavior in a single screen model.
+// Core responsibilities: load item data, enforce ownership rules, validate input, and save via API.
 [QueryProperty(nameof(ItemId), "itemId")]
 public partial class ItemDetailViewModel : BaseViewModel
 {
@@ -72,6 +75,7 @@ public partial class ItemDetailViewModel : BaseViewModel
 
     partial void OnItemIdChanged(int value)
     {
+        // QueryProperty updates this value when navigating to the page.
         _ = LoadAsync(value);
     }
 
@@ -91,6 +95,7 @@ public partial class ItemDetailViewModel : BaseViewModel
             return;
         }
 
+        // All business-safe input checks are centralized before any API call is made.
         if (!ValidateInput(out var dailyRate, out var latitude, out var longitude))
         {
             return;
@@ -103,6 +108,7 @@ public partial class ItemDetailViewModel : BaseViewModel
 
             if (IsNewItem)
             {
+                // New item path: create, then reload item to align local state with server response.
                 var request = new UpsertItemDto
                 {
                     Title = TitleText.Trim(),
@@ -114,12 +120,16 @@ public partial class ItemDetailViewModel : BaseViewModel
                     Longitude = longitude
                 };
 
+                // Send the new item to the API. The API returns the new database ID.
                 ItemId = await _itemApiService.CreateItemAsync(request);
+                // We are no longer creating a brand-new item after this point.
                 IsNewItem = false;
+                // Reload from API so this screen has the final saved values from the server.
                 _loadedItem = await _itemApiService.GetItemAsync(ItemId);
             }
             else
             {
+                // Existing item path: only owner can update.
                 if (_loadedItem is null)
                 {
                     SetError("Item could not be loaded.");
@@ -161,20 +171,24 @@ public partial class ItemDetailViewModel : BaseViewModel
     [RelayCommand]
     private async Task NavigateBackAsync()
     {
+        // Navigate back to the item list screen.
         await _navigationService.NavigateToAsync("ItemListPage");
     }
 
     [RelayCommand]
     private async Task NavigateToDashboardAsync()
     {
+        // Navigate to the dashboard/home screen.
         await _navigationService.NavigateToAsync("MainPage");
     }
 
     [RelayCommand]
     private async Task RequestToRentAsync()
     {
+        // Guard clause: if item has no valid ID, there is nothing to request.
         if (ItemId <= 0) return;
 
+        // Open rental request page and pass values it needs through route parameters.
         await _navigationService.NavigateToAsync("RentalRequestPage", new Dictionary<string, object>
         {
             ["itemId"] = ItemId,
@@ -184,6 +198,7 @@ public partial class ItemDetailViewModel : BaseViewModel
 
     private async Task LoadAsync(int id)
     {
+        // Prevent duplicate loads if user taps quickly or page lifecycle triggers again.
         if (IsBusy)
         {
             return;
@@ -191,12 +206,15 @@ public partial class ItemDetailViewModel : BaseViewModel
 
         try
         {
+            // Signal loading state so UI can disable buttons/spinners.
             IsBusy = true;
             ClearError();
+            // Ensure auth state is ready before using current user data.
             await _authService.InitializeAsync();
 
             if (id <= 0)
             {
+                // id<=0 means navigation requested "create new item" mode.
                 IsNewItem = true;
                 CanEdit = _authService.IsAuthenticated;
                 OwnerDisplay = _authService.CurrentUser?.FullName ?? "Unknown";
@@ -243,6 +261,7 @@ public partial class ItemDetailViewModel : BaseViewModel
 
     private bool ValidateInput(out decimal dailyRate, out double? latitude, out double? longitude)
     {
+        // Validation keeps error messages consistent and prevents partial writes.
         dailyRate = 0m;
         latitude = null;
         longitude = null;
